@@ -1,0 +1,179 @@
+\documentclass[11pt, a4paper, twoside]{report}
+
+% =====================================================================
+%  ESSENTIAL PACKAGES
+% =====================================================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}                 % scalable Latin Modern (the "font")
+\usepackage{amsmath, amssymb, amsthm, mathtools}
+\usepackage[margin=1.2in]{geometry}
+\usepackage{graphicx}
+\usepackage{microtype}               % subtle spacing polish
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+
+% =====================================================================
+%  STYLING PACKAGES
+% =====================================================================
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage[most]{tcolorbox}
+\usepackage{tikz}
+\usetikzlibrary{calc}
+\usepackage{hyperref}
+
+% =====================================================================
+%  COLOR PALETTE
+% =====================================================================
+\definecolor{primary}{RGB}{41, 128, 185}
+\definecolor{secondary}{RGB}{142, 68, 173}
+\definecolor{boxbg}{RGB}{249, 250, 252}
+\definecolor{boxframe}{RGB}{189, 195, 199}
+\definecolor{insightbg}{RGB}{246, 248, 251}
+\definecolor{insightframe}{RGB}{41, 128, 185}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=primary,
+    filecolor=secondary,
+    urlcolor=primary,
+    citecolor=secondary,
+}
+
+% =====================================================================
+%  CHAPTER / SECTION / HEADER STYLING
+% =====================================================================
+\titleformat{\chapter}[display]
+  {\normalfont\bfseries\color{primary}\Huge}
+  {\filleft\Large\color{secondary}\chaptertitlename\ \thechapter}
+  {1ex}
+  {\titlerule\vspace{1ex}\filright}
+  [\vspace{1ex}\titlerule]
+
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{primary}}{\thesection}{0.7em}{}
+\titleformat{\subsection}
+  {\normalfont\large\bfseries\color{secondary}}{\thesubsection}{0.6em}{}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[LE,RO]{\thepage}
+\fancyhead[LO]{\nouppercase{\rightmark}}
+\fancyhead[RE]{\nouppercase{\leftmark}}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% =====================================================================
+%  THEOREM-LIKE BOXES (tcolorbox)
+% =====================================================================
+\tcbset{
+    commonstyle/.style={
+        enhanced, breakable,
+        boxrule=0.5pt,
+        colback=boxbg,
+        colframe=boxframe,
+        arc=3pt,
+        left=6pt, right=6pt, top=4pt, bottom=4pt,
+        fonttitle=\bfseries,
+        attach boxed title to top left={yshift=-2mm, xshift=4mm},
+        boxed title style={colback=white, colframe=white, size=small}
+    }
+}
+
+\newtcbtheorem[number within=chapter]{theorem}{Theorem}%
+  {commonstyle, coltitle=primary}{thm}
+\newtcbtheorem[number within=chapter]{lemma}{Lemma}%
+  {commonstyle, coltitle=secondary}{lem}
+\newtcbtheorem[number within=chapter]{proposition}{Proposition}%
+  {commonstyle, coltitle=primary}{prop}
+\newtcbtheorem[number within=chapter]{corollary}{Corollary}%
+  {commonstyle, coltitle=secondary}{cor}
+\newtcbtheorem[number within=chapter]{definition}{Definition}%
+  {commonstyle, coltitle=black}{def}
+\newtcbtheorem[number within=chapter]{question}{Question}%
+  {commonstyle, coltitle=black, colback=white, colframe=primary!40}{qst}
+\newtcbtheorem[number within=chapter]{remark}{Remark}%
+  {commonstyle, coltitle=gray, colback=white, colframe=gray!35}{rmk}
+
+% --- Proof box: subtle left rule, breakable, with run-in "Proof." ---
+\newenvironment{proofbox}{%
+  \begin{tcolorbox}[enhanced, breakable, colback=white, boxrule=0pt,
+      frame hidden, sharp corners,
+      borderline west={2pt}{0pt}{gray!40},
+      left=10pt, right=2pt, top=4pt, bottom=4pt]%
+  \itshape Proof.\upshape\ }%
+  {\hfill\ensuremath{\square}\end{tcolorbox}}
+\let\proof\proofbox
+\let\endproof\endproofbox
+
+% --- "Insight" callout for original commentary ---
+\newtcolorbox{insight}[1][]{
+  enhanced, breakable, colback=insightbg, colframe=insightframe,
+  boxrule=0pt, leftrule=2.5pt, arc=1pt,
+  left=8pt, right=8pt, top=5pt, bottom=5pt,
+  fontupper=\small,
+  overlay unbroken and first={
+    \node[anchor=north west, font=\bfseries\footnotesize\color{primary}]
+    at ([xshift=8pt,yshift=-3pt]frame.north west) {INSIGHT};
+  },
+  before upper={\vspace{0.9em}}, #1
+}
+
+% =====================================================================
+%  CONVENIENCE MACROS
+% =====================================================================
+\providecommand{\E}{\mathbb{E}}
+\providecommand{\Prob}{\mathbb{P}}
+\providecommand{\ind}{\mathbf{1}}
+\providecommand{\cross}{\operatorname{cr}}
+
+\begin{document}
+
+% =====================================================================
+%  CUSTOM TITLE PAGE  (unchanged)
+% =====================================================================
+\begin{titlepage}
+    \begin{tikzpicture}[remember picture, overlay]
+        \node[inner sep=0pt] at (current page.center) {%
+            \includegraphics[width=\paperwidth, height=\paperheight]{figures/front_page.png}
+        };
+    \end{tikzpicture}
+
+    \vspace*{6cm}
+    \begin{center}
+    \begin{tcolorbox}[enhanced, colback=white!90!black, colframe=primary, arc=8pt,
+        width=0.85\textwidth, halign=center, boxsep=15pt, drop shadow]
+
+        {\Huge \textbf{\color{primary} Probabilistic Methods}\par}
+        \vspace{0.8cm}
+        {\Large An Expanded Treatise on Theoretical \& Algorithmic Applications\par}
+        \vspace{1.5cm}
+        {\Large \textit{Sanidhya Saraf}\par}
+        \vspace{0.5cm}
+
+    \end{tcolorbox}
+    \end{center}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% =====================================================================
+%  MAIN CONTENT
+% =====================================================================
+\include{chapters/01_introduction}
+\include{chapters/02_linearity}
+\include{chapters/03_alterations}
+\include{chapters/04_second_moment}
+\include{chapters/05_chernoff}
+\include{chapters/06_lll}
+
+% =====================================================================
+%  APPENDIX
+% =====================================================================
+\appendix
+\include{appendix/A_probability_toolkit}
+
+\end{document}

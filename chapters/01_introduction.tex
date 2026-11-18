@@ -1,0 +1,550 @@
+% =====================================================================
+%  Chapter 1 — Introduction: The Probabilistic Method
+%  File: chapters/01_introduction.tex
+%  Restyled to match Chapter 2 (boxed environments + Insight callouts).
+%  Labels needed by later chapters are preserved (notably thm:szele and
+%  the method of conditional expectations).
+% =====================================================================
+\providecommand{\E}{\mathbb{E}}
+\providecommand{\Prob}{\mathbb{P}}
+\providecommand{\ind}{\mathbf{1}}
+
+\chapter{The Probabilistic Method}
+\label{chap:intro}
+
+The probabilistic method is a technique for proving that an object exists by
+showing that a \emph{random} object has the desired property with positive
+probability. One never points to the object; one merely argues that the
+alternative --- that \emph{no} good object exists --- would force a
+probability to be zero when it cannot be. The disorienting feature, the first
+time one meets it, is that a question with no randomness in its statement is
+answered by introducing randomness that the answer then discards.
+
+Two facts do almost all the work in this chapter. The first is \emph{linearity
+of expectation}, $\E[\sum_i X_i]=\sum_i\E[X_i]$, valid with no independence
+assumption; the second is the \emph{union bound},
+$\Prob(\bigcup_i E_i)\le\sum_i\Prob(E_i)$. From these we extract existence
+through one elementary principle: if $\E[X]=\mu$ then some outcome has
+$X\ge\mu$ and some has $X\le\mu$, and if $\Prob(\bigcup_i E_i)<1$ then some
+outcome avoids every $E_i$. The rest of the chapter is variations on this
+theme, sharpened twice --- by \emph{alteration} (fix the defects of a random
+object) and by the \emph{Lov\'asz Local Lemma} (escape the union bound when
+dependencies are sparse).
+
+% =====================================================================
+\section{A first example: large bipartite subgraphs}
+% =====================================================================
+
+\begin{theorem}{Large bipartite subgraph}{maxcut}
+Every graph with $m$ edges contains a bipartite subgraph with at least $m/2$
+edges.
+\end{theorem}
+
+\begin{proof}
+Colour each vertex of $G=(V,E)$ black or white, independently and uniformly at
+random, and let $E'$ be the set of edges joining opposite colours. The graph
+$(V,E')$ is bipartite by construction. Each edge lands in $E'$ exactly when its
+two endpoints receive different colours, which happens with probability
+$1/2$, so by linearity $\E|E'|=\tfrac12|E|$. Some colouring therefore achieves
+$|E'|\ge\tfrac12|E|$, and that colouring exhibits the required subgraph.
+\end{proof}
+
+\begin{insight}
+This is the probabilistic method in miniature, and worth dwelling on because
+every later argument is a descendant. Note what the proof does \emph{not} do:
+it never produces a good bipartition, only certifies one exists. The bound
+$m/2$ is also a genuine guarantee, not just an asymptotic --- and it is
+essentially tight, since the complete graph $K_n$ has $\binom n2$ edges but its
+largest cut has only $\lfloor n^2/4\rfloor\approx m/2$ of them. Read
+algorithmically, the same statement says random colouring is a
+$\tfrac12$-approximation for \textsc{Max-Cut}; the entire field of randomized
+approximation grows from exactly this observation.
+\end{insight}
+
+% =====================================================================
+\section{From existence to algorithm}
+% =====================================================================
+
+A first-moment proof asserts existence but offers no recipe. Often one can be
+recovered, by replacing a single random choice for the whole object with a
+sequence of \emph{conditional} choices.
+
+\begin{remark}{The method of conditional expectations}{condexp}
+Instead of colouring all vertices of $G$ at once, colour them one at a time. At
+vertex $v_k$, the colours of $v_1,\dots,v_{k-1}$ are already fixed; compute the
+conditional expectation of $|E'|$ under each of the two choices for $v_k$
+(with the remaining vertices still random) and commit to whichever is larger.
+Because the average of the two conditional expectations equals the expectation
+before the choice, the running conditional expectation never decreases. It
+starts at $m/2$ and ends, once all vertices are coloured, at the actual cut
+size --- which is therefore at least $m/2$. The existence proof has become a
+deterministic linear-time algorithm.
+\end{remark}
+
+The same idea is a workhorse in theoretical computer science. Consider
+\textsc{Max-Sat}: given a boolean formula in conjunctive normal form, satisfy
+as many clauses as possible.
+
+\begin{theorem}{Expected satisfiability}{maxsat}
+A CNF formula with $m$ clauses, where clause $C_j$ has $k_j$ distinct literals,
+admits a truth assignment satisfying at least
+$\displaystyle\sum_{j=1}^m\bigl(1-2^{-k_j}\bigr)$ clauses.
+\end{theorem}
+
+\begin{proof}
+Set each variable to true or false independently with probability $1/2$. Clause
+$C_j$ fails only if all $k_j$ of its literals evaluate to false, an event of
+probability $2^{-k_j}$ by independence, so the indicator $Z_j$ of ``$C_j$
+satisfied'' has $\E[Z_j]=1-2^{-k_j}$. Linearity gives
+$\E\sum_j Z_j=\sum_j(1-2^{-k_j})$, and some assignment meets this average.
+\end{proof}
+
+\begin{insight}
+For clauses of width $k_j\ge1$ this guarantees at least $m/2$ satisfied
+clauses, and the bound improves as clauses lengthen --- width-$3$ clauses
+alone already force a $\tfrac78$ fraction. Derandomized by conditional
+expectations, this is Johnson's algorithm. The right way to see conditional
+expectations is as a \emph{potential function}: the conditional mean is a
+quantity you can always hold steady or raise by a local decision, so a greedy
+walk down the tree of choices lands at an outcome no worse than the global
+average. That reframing --- existence proof as potential function ---
+recurs throughout combinatorial optimization.
+\end{insight}
+
+% =====================================================================
+\section{Counting Hamilton paths: Szele's theorem}
+% =====================================================================
+
+A \emph{tournament} is an orientation of $K_n$, and a \emph{Hamilton path} is a
+directed path through all $n$ vertices. The following 1943 result is often
+called the first true application of the probabilistic method.
+
+\begin{theorem}{Szele 1943}{szele}
+There is a tournament on $n$ vertices with at least $\dfrac{n!}{2^{\,n-1}}$
+Hamilton paths.
+\end{theorem}
+
+\begin{proof}
+Orient each edge of $K_n$ by an independent fair coin. Fix an ordering
+$\pi=(v_1,\dots,v_n)$ of the vertices and let $X_\pi$ indicate that $\pi$ is a
+directed path, i.e.\ that all $n-1$ consecutive edges point forward. These are
+independent fair events, so $\Prob(X_\pi=1)=2^{-(n-1)}$. Summing over all $n!$
+orderings, linearity gives $\E\sum_\pi X_\pi=n!\,2^{-(n-1)}$, and some
+tournament attains at least the average.
+\end{proof}
+
+\begin{insight}
+The proof is pure existence: it guarantees a tournament rich in Hamilton paths
+without naming one. It is also a first taste of the first moment's habit of
+being right in form but loose in scale --- the true maximum is exponentially
+larger in its base, $n!/(2-o(1))^n$, a fact requiring much heavier machinery
+(Alon's 1990 permanent bound). We return to the minimization side and these
+sharper asymptotics in Chapter~2; here Szele serves simply as the historical
+seed of everything that follows.
+\end{insight}
+
+% =====================================================================
+\section{Lower bounds for Ramsey numbers}
+% =====================================================================
+
+\begin{definition}{Ramsey number}{ramseynum}
+The \emph{Ramsey number} $R(k,\ell)$ is the least $n$ such that every red/blue
+edge-colouring of $K_n$ contains a red $K_k$ or a blue $K_\ell$. Ramsey (1929)
+proved $R(k,\ell)$ is finite; for instance $R(3,3)=6$.
+\end{definition}
+
+\begin{remark}{A historical aside}{history}
+Paul Erd\H{o}s (1913--1996), with roughly $1{,}500$ papers and over $500$
+collaborators, is regarded as the father of the probabilistic method; the
+Ramsey lower bound below comes from his 1947 paper. Frank Ramsey (1903--1930)
+did foundational work in logic, philosophy, and economics before dying at
+$26$. Because so much of the subject traces to Erd\H{o}s's circle, Hungarian
+names abound; a pronunciation guide:
+\begin{center}\small
+\begin{tabular}{lll}
+\toprule
+\textbf{Spelling} & \textbf{Sounds like} & \textbf{Examples}\\
+\midrule
+s  & sh & Erd\H{o}s, Simonovits\\
+sz & s  & Szemer\'edi, Lov\'asz\\
+\bottomrule
+\end{tabular}
+\end{center}
+\end{remark}
+
+\begin{theorem}{Erd\H{o}s 1947}{ramsey1}
+If $\binom nk 2^{\,1-\binom k2}<1$, then $R(k,k)>n$.
+\end{theorem}
+
+\begin{proof}
+Colour the edges of $K_n$ red/blue independently and uniformly. For each
+$k$-set $S$ let $A_S$ be the event that $S$ is monochromatic; the
+$\binom k2$ edges inside $S$ must agree, so $\Prob(A_S)=2^{\,1-\binom k2}$. By
+the union bound,
+\[
+  \Prob\Bigl(\textstyle\bigcup_S A_S\Bigr)
+  \le \sum_{S}\Prob(A_S)=\binom nk 2^{\,1-\binom k2}<1,
+\]
+so with positive probability no $A_S$ occurs --- a colouring with no
+monochromatic $K_k$.
+\end{proof}
+
+\begin{remark}{Quantitative form}{ramsey1q}
+Optimizing $n$ via Stirling gives
+$R(k,k)>\bigl(\tfrac{1}{e\sqrt2}+o(1)\bigr)k\,2^{k/2}$. From the other side,
+Erd\H{o}s--Szekeres (1935) showed $R(k,k)\le(4-o(1))^k$, and Campos,
+Griffiths, Morris, and Sahasrabudhe (2023+) achieved the first exponential
+improvement, $R(k,k)\le(4-c)^k$ for some $c>0$.
+\end{remark}
+
+\begin{insight}
+The union bound is nothing but the first moment in disguise: $\sum_S\Prob(A_S)$
+is the \emph{expected} number of monochromatic cliques, and ``expected number
+$<1$'' forces ``some outcome has zero.'' The proof is also the standard
+illustration of existence without construction --- a random colouring works
+with overwhelming probability, yet no efficient way is known to certify that a
+given colouring is good, a situation memorably described as finding hay in a
+haystack. Pinning down an explicit construction matching the random bound is a
+deep open problem with surprising ties to randomness extractors.
+\end{insight}
+
+\subsection*{Alteration}
+
+\begin{theorem}{Ramsey lower bound via alteration}{ramsey_alt}
+For all $k,n$, $\;R(k,k)>n-\binom nk 2^{\,1-\binom k2}$.
+\end{theorem}
+
+\begin{proof}
+Colour $K_n$ at random as before, then \emph{delete} one vertex from each
+monochromatic $K_k$; the result has no monochromatic $K_k$. If $X$ counts the
+monochromatic cliques after step one, then $\E[X]=\binom nk 2^{\,1-\binom k2}$,
+and we remove at most $X$ vertices, leaving at least $n-X$ with expectation
+$n-\binom nk 2^{\,1-\binom k2}$. Some outcome meets this expectation.
+\end{proof}
+
+\begin{remark}{}{ramsey_altq}
+Optimizing $n$ yields $R(k,k)>\bigl(\tfrac1e+o(1)\bigr)k\,2^{k/2}$, a factor
+$\sqrt2$ better than the union-bound estimate.
+\end{remark}
+
+\begin{insight}
+Alteration --- also called the deletion method --- is the first genuine upgrade
+to the bare first moment: rather than demanding that a random object be perfect,
+we accept a flawed one and pay to repair it. The accounting is the same first
+moment, now applied to the \emph{cost of repair} (the expected number of
+deletions) rather than to success outright. The payoff here is only a constant
+factor, but the pattern --- build sloppily, then clean up --- is one of the
+most broadly useful in the subject.
+\end{insight}
+
+\subsection*{The Lov\'asz Local Lemma}
+
+To avoid bad events $E_1,\dots,E_m$ there are two crude regimes. The union
+bound needs $\sum_i\Prob(E_i)<1$, which collapses once the events are
+numerous. Full independence gives
+$\Prob(\bigcap_i \overline{E_i})=\prod_i(1-\Prob(E_i))>0$, but genuine
+independence is rare. The local lemma occupies the ground between: sparse
+dependence suffices.
+
+\begin{theorem}{Lov\'asz Local Lemma (variable model)}{lll}
+Let $x_1,\dots,x_N$ be independent random variables and
+$B_1,\dots,B_m\subseteq[N]$, with each event $E_i$ determined by
+$\{x_j:j\in B_i\}$. If every $B_i$ meets at most $d$ other $B_j$ and
+$\Prob(E_i)\le\dfrac{1}{(d+1)e}$ for all $i$, then with positive probability
+none of the $E_i$ occur. (The constant $e$ is optimal; proof deferred to
+Chapter~6.)
+\end{theorem}
+
+\begin{theorem}{Spencer 1977}{ramsey_lll}
+If $\;e\bigl(\binom k2\binom{n}{k-2}+1\bigr)2^{\,1-\binom k2}\le 1$, then
+$R(k,k)>n$.
+\end{theorem}
+
+\begin{proof}
+Colour $K_n$ at random, one independent variable per edge, and let $E_S$ be the
+event that the $k$-set $S$ is monochromatic, so $\Prob(E_S)=2^{\,1-\binom k2}$.
+Two cliques share an edge precisely when their vertex sets overlap in at least
+two vertices, and each $S$ has at most $\binom k2\binom{n}{k-2}$ such partners.
+With $d=\binom k2\binom{n}{k-2}$, the hypothesis is exactly the local-lemma
+condition $\Prob(E_S)\le 1/((d+1)e)$, so positively often no $E_S$ occurs.
+\end{proof}
+
+\begin{remark}{}{ramsey_lllq}
+Optimizing gives $R(k,k)>\bigl(\tfrac{\sqrt2}{e}+o(1)\bigr)k\,2^{k/2}$, the best
+lower bound known.
+\end{remark}
+
+\begin{insight}
+The three Ramsey bounds form a clean ladder, each rung a factor $\sqrt2$ above
+the last:
+\[
+  \tfrac{1}{e\sqrt2}\ \xrightarrow{\text{union bound}}\
+  \tfrac{1}{e}\ \xrightarrow{\text{alteration}}\
+  \tfrac{\sqrt2}{e}\ \ (k\,2^{k/2}).
+\]
+It is the same problem solved three times with progressively sharper tools, and
+a faithful map of the method's hierarchy --- first moment, then repair, then
+local independence. Tellingly, decades of effort have not moved the
+\emph{leading constant} past $\sqrt2/e$ from below, even as the upper bound has
+only recently cracked $4^k$ from above; the multiplicative gap in
+$R(k,k)^{1/k}$ between $\sqrt2$ and $4-c$ remains one of the famous open
+problems of the area.
+\end{insight}
+
+% =====================================================================
+\section{Extremal set systems}
+% =====================================================================
+
+A set family $\mathcal F$ on ground set $[n]$ is an \emph{antichain} if no
+member contains another. The extremal question --- how large can an antichain
+be --- has a one-line probabilistic answer.
+
+\begin{theorem}{Sperner 1928}{sperner}
+An antichain of subsets of $[n]$ has at most $\binom{n}{\lfloor n/2\rfloor}$
+members.
+\end{theorem}
+
+This follows from a stronger weighted statement.
+
+\begin{theorem}{LYM inequality}{lym}
+For an antichain $\mathcal F\subseteq 2^{[n]}$,
+$\displaystyle\sum_{A\in\mathcal F}\binom{n}{|A|}^{-1}\le 1.$
+\end{theorem}
+
+\begin{proof}
+Draw a uniform random permutation $\sigma$ of $[n]$ and form the maximal chain
+$\emptyset\subset\{\sigma(1)\}\subset\{\sigma(1),\sigma(2)\}\subset\cdots\subset[n]$.
+A fixed set $A$ appears in this chain exactly when $\sigma$ lists the elements
+of $A$ first (in some order) and then the rest, which happens for
+$|A|!\,(n-|A|)!$ of the $n!$ permutations; hence
+$\Prob(A\in\text{chain})=\binom{n}{|A|}^{-1}$. The chain is itself a chain, so
+it contains at most one member of the antichain $\mathcal F$ --- the events
+``$A\in\text{chain}$'' for $A\in\mathcal F$ are disjoint, and their
+probabilities sum to at most $1$.
+\end{proof}
+
+Sperner's bound drops out, since $\binom{n}{|A|}\le\binom{n}{\lfloor n/2\rfloor}$
+makes each term at least $\binom{n}{\lfloor n/2\rfloor}^{-1}$, so
+$|\mathcal F|\le\binom{n}{\lfloor n/2\rfloor}$.
+
+\begin{insight}
+The trick is a normalization: a uniformly random maximal chain meets each set
+$A$ with probability $1/\binom{n}{|A|}$, so weighting each set by that
+reciprocal turns the geometric fact ``a chain hits an antichain at most once''
+into the analytic inequality $\sum 1/\binom{n}{|A|}\le1$. It is again a
+first-moment argument, this time bounding the expected number of hits ($\le1$)
+from above; equality forces $\mathcal F$ to be a single middle layer. The same
+random-ordering device, suitably adapted, proves the next two theorems too ---
+it is the unifying engine of probabilistic extremal set theory.
+\end{insight}
+
+\begin{theorem}{Bollob\'as two families theorem 1965}{bollobas}
+Let $A_1,\dots,A_m$ and $B_1,\dots,B_m$ be finite sets with $A_i\cap B_i=\emptyset$
+for all $i$ and $A_i\cap B_j\ne\emptyset$ for all $i\ne j$. Then
+$\displaystyle\sum_{i=1}^m\binom{|A_i|+|B_i|}{|A_i|}^{-1}\le 1.$
+\end{theorem}
+
+\begin{proof}
+Take a uniform random ordering of $\bigcup_i(A_i\cup B_i)$ and let $E_i$ be the
+event that every element of $A_i$ precedes every element of $B_i$. Restricted
+to $A_i\cup B_i$, this asks the $|A_i|$ elements of $A_i$ to come first among
+$|A_i|+|B_i|$, so $\Prob(E_i)=\binom{|A_i|+|B_i|}{|A_i|}^{-1}$. The events are
+pairwise disjoint: if $E_i$ and $E_j$ both held, the disjointness and crossing
+hypotheses on $A_i,B_i,A_j,B_j$ would be contradicted. Disjoint events sum to
+at most $1$.
+\end{proof}
+
+\begin{remark}{Why it is natural: transversals}{bollobastrans}
+The uniform case $|A_i|=r,\,|B_i|=s$ reads $m\le\binom{r+s}{r}$, and it is
+sharp. It also answers a question about transversals. Call $T$ a
+\emph{transversal} of a family if it meets every member, write $\tau$ for the
+minimum transversal size, and call a family $\tau$-critical if deleting any
+member lowers $\tau$. The largest $\tau$-critical $r$-uniform family with
+$\tau=s+1$ has exactly $\binom{r+s}{r}$ members: take the $A_i$ as the sets and
+$B_i$ as an $s$-element transversal of the family with $A_i$ removed, and the
+hypotheses of the theorem hold. Sperner and LYM are themselves special cases,
+via $B_i=[n]\setminus A_i$.
+\end{remark}
+
+A family is \emph{intersecting} if any two of its members meet.
+
+\begin{theorem}{Erd\H{o}s--Ko--Rado 1961}{ekr}
+If $n\ge 2k$, an intersecting family of $k$-subsets of $[n]$ has at most
+$\binom{n-1}{k-1}$ members.
+\end{theorem}
+
+\begin{proof}
+Arrange $1,\dots,n$ uniformly at random around a circle and call a $k$-set
+\emph{contiguous} if it forms an arc. A fixed $k$-set is contiguous with
+probability $n/\binom nk$, so the expected number of contiguous members of
+$\mathcal F$ is $n|\mathcal F|/\binom nk$. On the other hand, any single
+circular arrangement contains at most $k$ contiguous members of an intersecting
+family: fixing one contiguous member $A$, the only arcs meeting $A$ come in
+disjoint pairs once $n\ge 2k$, so at most $k$ of them (including $A$) can
+pairwise intersect. Hence $n|\mathcal F|/\binom nk\le k$, giving
+$|\mathcal F|\le\tfrac kn\binom nk=\binom{n-1}{k-1}$.
+\end{proof}
+
+\begin{insight}
+This is Katona's \emph{cycle method}: average over rotations rather than over
+subsets, so a global counting problem becomes a tiny local one --- how many
+arcs of an intersecting family fit on one circle. The hypothesis $n\ge2k$ is
+not cosmetic; for $n<2k$ \emph{every} pair of $k$-sets intersects by
+pigeonhole, the family $\binom{[n]}{k}$ is itself intersecting, and the bound
+fails. The extremal family --- all $k$-sets through a fixed element --- shows
+the answer $\binom{n-1}{k-1}$ is exactly right.
+\end{insight}
+
+% =====================================================================
+\section{Two-colourable hypergraphs}
+% =====================================================================
+
+A $k$-uniform hypergraph is \emph{$2$-colourable} (has \emph{property B}) if its
+vertices can be coloured with two colours leaving no edge monochromatic. Let
+$m(k)$ be the fewest edges in a $k$-uniform hypergraph that is \emph{not}
+$2$-colourable. The first values are $m(2)=3$, $m(3)=7$ (the Fano plane), and
+$m(4)=23$ (found by computer search); $m(k)$ is unknown for every $k\ge5$. The
+probabilistic method brackets it from both sides.
+
+\begin{theorem}{Lower bound, Erd\H{o}s 1964}{hyper_lower}
+$m(k)\ge 2^{k-1}$ for every $k\ge2$.
+\end{theorem}
+
+\begin{proof}
+Suppose the hypergraph has $m<2^{k-1}$ edges and colour the vertices with a
+uniform random $2$-colouring. A fixed $k$-edge is monochromatic with
+probability $2\cdot 2^{-k}=2^{-(k-1)}$, so the expected number of monochromatic
+edges is at most $2^{-(k-1)}m<1$. Some colouring therefore has none, i.e.\ the
+hypergraph is $2$-colourable.
+\end{proof}
+
+\begin{theorem}{Upper bound, Erd\H{o}s 1964}{hyper_upper}
+$m(k)=O(k^2 2^k)$.
+\end{theorem}
+
+\begin{proof}
+Put $n=k^2$ vertices and build $H$ by choosing $m$ edges uniformly at random
+(with replacement) from all $k$-subsets. Fix a $2$-colouring splitting the
+vertices into parts of sizes $a$ and $b=n-a$. A random edge avoids being
+monochromatic unless it lands entirely in one part, and a short estimate gives
+$\Prob(\text{edge monochromatic})\ge c\,2^{-k}$ for an absolute $c>0$. The $m$
+edges are independent, so
+\[
+  \Prob(\chi\text{ is proper})\le(1-c\,2^{-k})^m\le e^{-c\,2^{-k}m},
+\]
+and a union bound over all $2^n$ colourings gives
+$\Prob(H\text{ is }2\text{-colourable})\le 2^n e^{-c\,2^{-k}m}<1$ once
+$m=O(k^2 2^k)$ (recall $n=k^2$). Some such $H$ is then non-$2$-colourable.
+\end{proof}
+
+\begin{insight}
+These two proofs run the probabilistic method in opposite directions. The lower
+bound shows a \emph{good} object exists (a proper colouring) by making the
+expected number of defects small. The upper bound shows a \emph{bad} object
+exists (a non-colourable hypergraph) by making every fixed colouring likely to
+fail and union-bounding over all colourings. Recognizing which direction a
+problem wants --- existence of structure versus existence of a hard instance ---
+is half the battle. The current record narrows the gap to
+$m(k)\gtrsim 2^k\sqrt{k/\log k}$, still proved probabilistically.
+\end{insight}
+
+% =====================================================================
+\section{The list chromatic number of \texorpdfstring{$K_{n,n}$}{Knn}}
+% =====================================================================
+
+In \emph{list colouring}, every vertex receives its own list of allowed colours;
+$G$ is \emph{$k$-choosable} if a proper colouring exists for \emph{every}
+assignment of $k$-element lists, and the \emph{list chromatic number}
+$\mathrm{ch}(G)$ is the least such $k$. Always $\chi(G)\le\mathrm{ch}(G)$, and
+the gap can be large: $K_{3,3}$ is $2$-colourable but not $2$-choosable.
+
+\begin{theorem}{Upper bound}{list_upper}
+If $n<2^{k-1}$ then $K_{n,n}$ is $k$-choosable; equivalently
+$\mathrm{ch}(K_{n,n})\le\lfloor\log_2(2n)\rfloor+1$.
+\end{theorem}
+
+\begin{proof}
+Mark each colour ``L'' or ``R'' by an independent fair coin. On a left vertex,
+discard the colours marked R; on a right vertex, discard those marked L. A
+fixed vertex loses its whole list of size $k$ with probability $2^{-k}$, so by
+the union bound some vertex is emptied with probability at most $2n\,2^{-k}<1$.
+With positive probability every list keeps a colour, and since left and right
+vertices now draw from disjoint colour pools (L versus R), assigning any
+surviving colour is proper.
+\end{proof}
+
+\begin{theorem}{Lower bound}{list_lower}
+If some non-$2$-colourable $k$-uniform hypergraph has $n$ edges, then $K_{n,n}$
+is not $k$-choosable.
+\end{theorem}
+
+\begin{proof}
+Let $H$ be such a hypergraph with edges $e_1,\dots,e_n$ and treat its vertices
+as colours. Give the $i$-th left vertex and the $i$-th right vertex the list
+$e_i$. A proper list colouring would pick one colour (vertex of $H$) per list
+(edge of $H$); the left choices and right choices each induce a colour class
+that must hit every edge, forcing a proper $2$-colouring of $H$ --- which does
+not exist.
+\end{proof}
+
+Combining the two with the hypergraph bound $m(k)=O(k^2 2^k)$ gives the
+asymptotics.
+
+\begin{corollary}{}{list_cor}
+$\mathrm{ch}(K_{n,n})=(1+o(1))\log_2 n.$
+\end{corollary}
+
+\begin{insight}
+The lower bound is the striking half: list-colourability of a graph is governed
+by a $2$-colourability question about a hypergraph, so the difficulty of
+property B transfers wholesale to choosability. Unlike the ordinary chromatic
+number, $\mathrm{ch}$ keeps growing with average degree --- Saxton and Thomason
+(2015) proved $\mathrm{ch}(G)>(1+o(1))\log_2 d$ for average degree $d$, with
+$K_{n,n}$ showing this is sharp, via the method of \emph{hypergraph
+containers}, one of the major modern developments in the area.
+\end{insight}
+
+% =====================================================================
+\section*{Exercises}
+\addcontentsline{toc}{section}{Exercises}
+% =====================================================================
+
+\begin{enumerate}[itemsep=4pt]
+  \item Verify the asymptotic calculations behind the Ramsey lower bounds:
+        \begin{enumerate}
+          \item the largest $n$ with $\binom nk 2^{1-\binom k2}<1$ is
+                $\bigl(\tfrac{1}{e\sqrt2}+o(1)\bigr)k\,2^{k/2}$;
+          \item the maximum of $n-\binom nk 2^{1-\binom k2}$ over $n$ is
+                $\bigl(\tfrac1e+o(1)\bigr)k\,2^{k/2}$;
+          \item the largest $n$ with
+                $e(\binom k2\binom{n}{k-2}+1)2^{1-\binom k2}<1$ is
+                $\bigl(\tfrac{\sqrt2}{e}+o(1)\bigr)k\,2^{k/2}$.
+        \end{enumerate}
+  \item Prove that if some $p\in[0,1]$ satisfies
+        $\binom nk p^{\binom k2}+\binom nt(1-p)^{\binom t2}<1$, then
+        $R(k,t)>n$. Deduce $R(4,t)\ge c\,(t/\log t)^{3/2}$.
+  \item Let $G$ have $n$ vertices and $m$ edges. Prove $K_n$ is a union of
+        $O(n^2(\log n)/m)$ isomorphic copies of $G$ (not necessarily
+        edge-disjoint).
+  \item Prove there is an absolute $C>0$ such that every $n\times n$ matrix with
+        distinct real entries can have its rows permuted so that no column
+        contains an increasing subsequence of length $\ge C\sqrt n$.
+  \item (Generalized Sperner.) If $\mathcal F\subseteq 2^{[n]}$ contains no
+        chain $A_1\subsetneq\cdots\subsetneq A_{k+1}$, prove $|\mathcal F|$ is at
+        most the union of the $k$ middle layers of the Boolean lattice.
+  \item Let $G$ have $n\ge10$ vertices and suppose adding any edge creates a new
+        $K_{10}$. Prove $G$ has at least $8n-36$ edges. \textit{(Hint: Bollob\'as.)}
+  \item Let $k\ge4$ and let $H$ be a $k$-uniform hypergraph with at most
+        $4^{k-1}/3^k$ edges. Prove its vertices can be $4$-coloured so that
+        every edge sees all four colours.
+  \item For $\mathcal F\subseteq 2^{[n]}$ and $A\subseteq[n]$ write
+        $\mathcal F|_A=\{S\cap A:S\in\mathcal F\}$. Prove that for every $n,k$
+        there is $\mathcal F$ with $|\mathcal F|=O(k2^k\log n)$ such that
+        $\mathcal F|_A=2^A$ for every $k$-set $A$.
+  \item Let $A_i$ be $r$-sets and $B_i$ be $s$-sets with $A_i\cap B_i=\emptyset$,
+        and for each $i\ne j$ at least one of $A_i\cap B_j$, $A_j\cap B_i$
+        nonempty. Prove $m\le(r+s)^{r+s}/(r^r s^s)$.
+  \item $\bigstar$ Show that every non-$2$-colourable $n$-uniform hypergraph has
+        at least $\tfrac n2\binom{2n-1}{n}$ unordered pairs of edges meeting in
+        exactly one vertex.
+\end{enumerate}

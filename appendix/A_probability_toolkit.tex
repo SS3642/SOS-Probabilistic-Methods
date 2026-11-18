@@ -1,0 +1,464 @@
+% =====================================================================
+%  Appendix A — A Probability Toolkit
+%  File: appendix/A_probability_toolkit.tex
+%  Styled to match the chapters (boxed results, proof boxes, Insight).
+%  Self-contained reference for the probabilistic background used in the
+%  main text.
+% =====================================================================
+\providecommand{\E}{\mathbb{E}}
+\providecommand{\Prob}{\mathbb{P}}
+\providecommand{\ind}{\mathbf{1}}
+\providecommand{\Var}{\operatorname{Var}}
+\providecommand{\Cov}{\operatorname{Cov}}
+
+\chapter{A Probability Toolkit}
+\label{chap:toolkit}
+
+This appendix collects the probabilistic facts the main text uses, with short
+proofs, so the chapters can quote them without interruption. Nothing here is
+deep; the value is in having the right tool named and stated cleanly. Almost
+every argument in the book reduces to one of four moves: compute a mean
+(\emph{first moment}), control a spread (\emph{second moment}), bound a tail
+(\emph{concentration}), or exploit convexity (\emph{Jensen}). The sections
+below are organized around exactly those.
+
+% =====================================================================
+\section{Probability spaces, events, and the union bound}
+% =====================================================================
+
+\begin{definition}{Finite probability space}{probspace}
+A \emph{finite probability space} is a finite set $\Omega$ together with weights
+$\Prob(\omega)\ge0$ summing to $1$. An \emph{event} is a subset $E\subseteq\Omega$,
+with $\Prob(E)=\sum_{\omega\in E}\Prob(\omega)$. The uniform space puts
+$\Prob(\omega)=1/|\Omega|$, so that $\Prob(E)=|E|/|\Omega|$.
+\end{definition}
+
+Almost all probabilistic-method arguments live on finite spaces, where
+``probability'' and ``proportion of outcomes'' coincide. The single most used
+fact about events is the following.
+
+\begin{theorem}{Union bound (Boole's inequality)}{union}
+For any events $E_1,\dots,E_m$,
+\[
+  \Prob\Bigl(\,\bigcup_{i=1}^m E_i\Bigr)\le\sum_{i=1}^m\Prob(E_i).
+\]
+\end{theorem}
+
+\begin{proof}
+Each outcome $\omega\in\bigcup_i E_i$ lies in at least one $E_i$, so its weight
+$\Prob(\omega)$ is counted at least once on the right-hand side and exactly
+once on the left. Summing weights gives the inequality.
+\end{proof}
+
+\begin{insight}
+The union bound is the workhorse of existence proofs: if the bad events
+$E_1,\dots,E_m$ satisfy $\sum_i\Prob(E_i)<1$, then
+$\Prob(\bigcup_i E_i)<1$, so some outcome avoids all of them. Its one weakness
+is that it ignores overlap entirely --- with many highly dependent events the
+sum overshoots $1$ even when avoidance is easy. That blind spot is exactly the
+gap the Lov\'asz Local Lemma (Chapter~1) is built to close. Note also that the
+union bound is secretly a first-moment statement: $\sum_i\Prob(E_i)$ is the
+expected number of bad events that occur.
+\end{insight}
+
+% =====================================================================
+\section{Random variables, expectation, and the first moment}
+% =====================================================================
+
+\begin{definition}{Random variable and expectation}{expectation}
+A \emph{random variable} is a function $X\colon\Omega\to\mathbb{R}$. Its
+\emph{expectation} (or mean) is
+\[
+  \E[X]=\sum_{\omega\in\Omega}\Prob(\omega)\,X(\omega)
+       =\sum_{t}t\,\Prob(X=t).
+\]
+The \emph{indicator} of an event $E$ is $\ind_E$, equal to $1$ on $E$ and $0$
+elsewhere; it satisfies $\E[\ind_E]=\Prob(E)$.
+\end{definition}
+
+\begin{theorem}{Linearity of expectation}{linearity}
+For random variables $X_1,\dots,X_n$ and scalars $c_1,\dots,c_n$,
+\[
+  \E\Bigl[\,\sum_i c_i X_i\Bigr]=\sum_i c_i\,\E[X_i],
+\]
+with no independence assumption.
+\end{theorem}
+
+\begin{proof}
+Expand both sides over outcomes:
+$\E[\sum_i c_iX_i]=\sum_\omega\Prob(\omega)\sum_i c_iX_i(\omega)
+=\sum_i c_i\sum_\omega\Prob(\omega)X_i(\omega)=\sum_i c_i\E[X_i]$,
+the middle step being a finite rearrangement of a double sum.
+\end{proof}
+
+\begin{insight}
+Pairing linearity with indicators gives the \emph{first moment method}: to
+count something, write it as $X=\sum_i\ind_{E_i}$ and read off
+$\E[X]=\sum_i\Prob(E_i)$, ignoring every correlation among the $E_i$. Then the
+\emph{averaging principle} --- some outcome has $X\ge\E[X]$, and some has
+$X\le\E[X]$ --- converts the mean into an existence statement in whichever
+direction you need. This two-step pattern (decompose into indicators, then
+average) underlies Chapter~2 almost in its entirety, and is the most
+frequently used idea in the book.
+\end{insight}
+
+A convenient companion is the tail-sum formula for nonnegative integer
+variables.
+
+\begin{proposition}{Tail-sum formula}{tailsum}
+If $X$ takes values in $\{0,1,2,\dots\}$, then
+$\displaystyle \E[X]=\sum_{t\ge1}\Prob(X\ge t).$
+\end{proposition}
+
+\begin{proof}
+Write $X=\sum_{t\ge1}\ind_{\{X\ge t\}}$ (the number of thresholds $X$ clears)
+and apply linearity: $\E[X]=\sum_{t\ge1}\Prob(X\ge t)$.
+\end{proof}
+
+% =====================================================================
+\section{Independence and products}
+% =====================================================================
+
+\begin{definition}{Independence and uncorrelatedness}{independence}
+Events $E,F$ are \emph{independent} if $\Prob(E\cap F)=\Prob(E)\Prob(F)$.
+Random variables $X,Y$ are independent if $\Prob(X=s,\,Y=t)=\Prob(X=s)\Prob(Y=t)$
+for all $s,t$. They are \emph{uncorrelated} if $\E[XY]=\E[X]\E[Y]$.
+\end{definition}
+
+\begin{proposition}{Independence implies uncorrelated}{indep-uncorr}
+If $X,Y$ are independent then $\E[XY]=\E[X]\,\E[Y]$. The converse is false.
+\end{proposition}
+
+\begin{proof}
+$\E[XY]=\sum_{s,t}st\,\Prob(X=s,Y=t)=\sum_{s,t}st\,\Prob(X=s)\Prob(Y=t)
+=\bigl(\sum_s s\,\Prob(X=s)\bigr)\bigl(\sum_t t\,\Prob(Y=t)\bigr)=\E[X]\E[Y].$
+For the converse, a single counterexample suffices and is left to the reader.
+\end{proof}
+
+\begin{insight}
+The asymmetry between sums and products is the whole reason linearity is so
+valuable: $\E[X+Y]=\E[X]+\E[Y]$ always, but $\E[XY]=\E[X]\E[Y]$ only under
+(un)correlatedness. First-moment arguments thrive precisely because they need
+only the additive identity, so they apply to wildly dependent indicators. The
+moment you need a \emph{product} of expectations --- as in the second-moment
+method below, or in independence-based tail bounds --- you must pay for it with
+an independence hypothesis.
+\end{insight}
+
+% =====================================================================
+\section{Variance and the second moment}
+% =====================================================================
+
+\begin{definition}{Variance and covariance}{variance}
+The \emph{variance} of $X$ is $\Var(X)=\E[(X-\E X)^2]=\E[X^2]-(\E X)^2$, and the
+\emph{covariance} of $X,Y$ is $\Cov(X,Y)=\E[XY]-\E[X]\E[Y]$.
+\end{definition}
+
+\begin{proposition}{Variance of a sum}{varsum}
+For any $X_1,\dots,X_n$,
+\[
+  \Var\Bigl(\sum_i X_i\Bigr)=\sum_i\Var(X_i)+\sum_{i\ne j}\Cov(X_i,X_j).
+\]
+If the $X_i$ are pairwise independent, the covariances vanish and the variances
+simply add.
+\end{proposition}
+
+\begin{proof}
+Expand $\Var(\sum_i X_i)=\E[(\sum_i(X_i-\E X_i))^2]$ and use linearity on the
+$n^2$ cross terms; the diagonal gives variances, the off-diagonal gives
+covariances.
+\end{proof}
+
+\begin{insight}
+This is the engine of the \emph{second moment method}. The first moment tells
+you $\E[X]$; the second tells you whether $X$ is actually \emph{close} to that
+mean. Concretely, if $\Var(X)=o(\E[X]^2)$ then $X>0$ with probability tending
+to $1$ (via Chebyshev below), upgrading ``$\E[X]>0$ so $X>0$ sometimes'' to
+``$X>0$ almost always.'' The crucial subtlety is that variance, unlike
+expectation, \emph{does} feel dependence: the covariance sum is where all the
+interaction between the $X_i$ resurfaces after linearity hid it. Controlling
+that sum is the real work in every second-moment argument.
+\end{insight}
+
+% =====================================================================
+\section{Tail bounds: Markov, Chebyshev, Chernoff}
+% =====================================================================
+
+\begin{theorem}{Markov's inequality}{markov}
+If $X\ge0$ then for every $a>0$, $\;\Prob(X\ge a)\le\dfrac{\E[X]}{a}.$
+\end{theorem}
+
+\begin{proof}
+Since $X\ge0$, we have $a\,\ind_{\{X\ge a\}}\le X$ pointwise. Taking
+expectations, $a\,\Prob(X\ge a)\le\E[X]$.
+\end{proof}
+
+\begin{theorem}{Chebyshev's inequality}{chebyshev}
+For any $X$ with finite variance and any $\lambda>0$,
+\[
+  \Prob\bigl(|X-\E X|\ge\lambda\bigr)\le\frac{\Var(X)}{\lambda^2}.
+\]
+\end{theorem}
+
+\begin{proof}
+Apply Markov to the nonnegative variable $(X-\E X)^2$ at level $\lambda^2$:
+$\Prob(|X-\E X|\ge\lambda)=\Prob((X-\E X)^2\ge\lambda^2)\le\E[(X-\E X)^2]/\lambda^2$.
+\end{proof}
+
+For sums of independent bounded variables, the decay is far stronger ---
+exponential rather than polynomial.
+
+\begin{theorem}{Chernoff bound (i.i.d.\ $\pm1$ form)}{chernoff}
+Let $S_n=\varepsilon_1+\cdots+\varepsilon_n$ with the $\varepsilon_i$
+independent and uniform on $\{-1,+1\}$. Then for every $\lambda>0$,
+\[
+  \Prob(S_n\ge\lambda)\le e^{-\lambda^2/(2n)},
+\]
+and the same bound holds for $\Prob(S_n\le-\lambda)$.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+For any $\theta>0$, Markov applied to $e^{\theta S_n}$ gives
+$\Prob(S_n\ge\lambda)\le e^{-\theta\lambda}\E[e^{\theta S_n}]$. Independence
+factorizes the moment generating function,
+$\E[e^{\theta S_n}]=\prod_i\E[e^{\theta\varepsilon_i}]=(\cosh\theta)^n
+\le e^{\theta^2 n/2}$, using $\cosh\theta\le e^{\theta^2/2}$. Thus
+$\Prob(S_n\ge\lambda)\le e^{\theta^2n/2-\theta\lambda}$, minimized at
+$\theta=\lambda/n$, which yields $e^{-\lambda^2/(2n)}$.
+\end{proof}
+
+\begin{insight}
+These three inequalities form a hierarchy of strength bought with increasing
+assumptions. Markov needs only nonnegativity and gives feeble $1/a$ decay.
+Chebyshev needs a variance and gives $1/\lambda^2$. Chernoff needs
+\emph{independence} and gives exponential decay --- the difference between
+``rarely'' and ``astronomically rarely.'' The exponent $-\lambda^2/(2n)$ says
+deviations of order $\sqrt n$ are the natural scale of fluctuation, matching the
+$\sqrt{2/\pi}\,\sqrt n$ that appears in the unbalancing-lights theorem of
+Chapter~2. The general moral: the more structure you can assume about how the
+summands interact, the sharper the tail you can prove.
+\end{insight}
+
+% =====================================================================
+\section{Convexity and Jensen's inequality}
+% =====================================================================
+
+\begin{definition}{Convex function}{convex}
+A function $f$ on an interval is \emph{convex} if for all $x,y$ and
+$t\in[0,1]$, $f(tx+(1-t)y)\le t f(x)+(1-t)f(y)$; equivalently, if $f''\ge0$ when
+$f$ is twice differentiable. It is \emph{concave} if $-f$ is convex.
+\end{definition}
+
+\begin{theorem}{Jensen's inequality}{jensen}
+If $f$ is convex then $f(\E[X])\le\E[f(X)]$; if $f$ is concave the inequality
+reverses.
+\end{theorem}
+
+\begin{proof}
+A convex $f$ lies above each of its tangent (support) lines: at the point
+$\mu=\E[X]$ there is a slope $c$ with $f(x)\ge f(\mu)+c(x-\mu)$ for all $x$.
+Substitute $X$ and take expectations; the linear term has mean zero, leaving
+$\E[f(X)]\ge f(\mu)$.
+\end{proof}
+
+\begin{insight}
+Jensen is how convexity enters extremal arguments. In the Turán proof of
+Chapter~2 it appears as the AM--HM inequality (the case $f(x)=1/x$), turning a
+sum $\sum_v 1/(n-d_v)$ into a clean bound in $n$ and the average degree. The
+discrete corollaries worth memorizing are all special cases: AM--GM from
+$f=\log$ (concave), the power-mean inequalities from $f=x^p$, and the fact that
+``spreading out'' a fixed total either always helps or always hurts a convex
+quantity --- which is precisely why extremal configurations tend to be either
+perfectly balanced or maximally lopsided.
+\end{insight}
+
+% =====================================================================
+\section{Handy analytic estimates}
+% =====================================================================
+
+The following elementary bounds appear constantly; we list them for reference.
+
+\begin{proposition}{The exponential bound}{expbound}
+For all real $x$, $\;1+x\le e^{x}$, with equality only at $x=0$. Consequently
+$(1-p)^m\le e^{-pm}$ for $p\in[0,1]$.
+\end{proposition}
+
+\begin{proof}
+The function $g(x)=e^x-(1+x)$ has $g'(x)=e^x-1$, negative for $x<0$ and positive
+for $x>0$, so $g$ has a global minimum $g(0)=0$; hence $g\ge0$. The corollary
+follows by setting $x=-p$ and raising to the $m$-th power.
+\end{proof}
+
+\begin{insight}
+The estimate $(1-p)^m\le e^{-pm}$ is the quiet hero of countless union-bound
+calculations --- it is what converts ``probability $(1-p)$ of avoiding one bad
+event'' into a clean exponential ``probability $e^{-pm}$ of avoiding all $m$,''
+as in the hypergraph $2$-colouring upper bound of Chapter~1. Whenever a proof
+needs to show a product of near-one factors is tiny, this is almost always the
+step.
+\end{insight}
+
+\begin{proposition}{Binomial and factorial estimates}{binomial}
+For $1\le k\le n$,
+\[
+  \Bigl(\frac nk\Bigr)^{k}\le\binom nk\le\Bigl(\frac{en}{k}\Bigr)^{k},
+\]
+and Stirling's formula gives $n!=(1+o(1))\sqrt{2\pi n}\,(n/e)^n$.
+\end{proposition}
+
+\begin{proof}
+The lower bound uses $\binom nk=\prod_{i=0}^{k-1}\frac{n-i}{k-i}\ge(n/k)^k$
+since each factor is at least $n/k$. The upper bound combines
+$\binom nk\le n^k/k!$ with $k!\ge(k/e)^k$ (itself a consequence of
+$e^k=\sum_j k^j/j!\ge k^k/k!$). Stirling is standard.
+\end{proof}
+
+\begin{proposition}{Means inequality}{amgm}
+For positive reals $x_1,\dots,x_n$,
+\[
+  \frac{n}{\sum_i 1/x_i}\;\le\;\Bigl(\textstyle\prod_i x_i\Bigr)^{1/n}\;\le\;
+  \frac{1}{n}\sum_i x_i,
+\]
+i.e.\ harmonic mean $\le$ geometric mean $\le$ arithmetic mean, with equality
+iff all $x_i$ are equal.
+\end{proposition}
+
+\begin{proof}
+The right inequality is Jensen for the concave $\log$; the left follows by
+applying it to $1/x_1,\dots,1/x_n$.
+\end{proof}
+
+% =====================================================================
+\section{The two guiding principles, in one place}
+% =====================================================================
+
+It is worth stating the book's two recurring existence engines side by side, as
+the appendix's parting summary.
+
+\begin{theorem}{Existence via the first moment}{firstmoment}
+Let $X$ be a real random variable on a finite space. Then there is an outcome
+with $X\ge\E[X]$ and an outcome with $X\le\E[X]$. In particular, if $X$ is a
+nonnegative integer with $\E[X]<1$, then $\Prob(X=0)>0$.
+\end{theorem}
+
+\begin{proof}
+If every outcome had $X<\E[X]$, averaging would give $\E[X]<\E[X]$; symmetrically
+for the other bound. For the last claim, $\E[X]<1$ with integer $X\ge0$ forces
+some outcome with $X<1$, i.e.\ $X=0$.
+\end{proof}
+
+\begin{theorem}{Existence via the union bound}{unionexistence}
+If bad events $E_1,\dots,E_m$ satisfy $\sum_i\Prob(E_i)<1$, then with positive
+probability none of them occur.
+\end{theorem}
+
+\begin{proof}
+$\Prob(\bigcup_i E_i)\le\sum_i\Prob(E_i)<1$, so the complementary event ---
+avoiding every $E_i$ --- has positive probability.
+\end{proof}
+
+\begin{insight}
+These two theorems are the same idea wearing different clothes. ``Expected
+number of bad events $<1$'' (union bound) and ``a good outcome beats the mean''
+(first moment) are both ways of saying a single inequality between an average
+and a threshold forces a favorable outcome to exist. Every existence proof in
+this book --- from the bipartite subgraph of Chapter~1 to the crossing-number
+inequality of Chapter~2 --- is, at bottom, one of these two lines with a
+cleverly chosen random object plugged in. The art is never in the probability;
+it is in choosing what to randomize.
+\end{insight}
+
+% =====================================================================
+\section{Asymptotics and ``with high probability''}
+% =====================================================================
+
+The chapters on random structures are written in the language of asymptotics, so
+we fix the notation. All statements are about $n\to\infty$.
+
+\begin{definition}{Asymptotic notation}{asymptotics}
+For nonnegative $f,g$: $f=O(g)$ means $f\le Cg$ eventually for a constant $C$;
+$f=\Omega(g)$ means $g=O(f)$; $f=\Theta(g)$ or $f\asymp g$ means both; $f=o(g)$
+(equivalently $f\ll g$, and $g\gg f$) means $f/g\to0$; and $f\sim g$ means
+$f/g\to1$.
+\end{definition}
+
+\begin{definition}{With high probability}{whp-def}
+An event $E_n$ holds \emph{with high probability} (\emph{whp}) if
+$\Prob(E_n)\to1$ as $n\to\infty$. Equivalently, its complement has probability
+$o(1)$.
+\end{definition}
+
+\begin{insight}
+``Whp'' does real work: a bound $\E[X_n]\to0$ becomes, through Markov,
+``$X_n=0$ for almost every instance,'' not merely on average. That is what lets
+one speak of \emph{the} typical random graph. Two whp events can always be
+intersected, since their failure probabilities still sum to $o(1)$; a growing
+number cannot, which is where the union bound's $\log$ factors --- and the
+Chernoff bounds that remove them --- come in.
+\end{insight}
+
+% =====================================================================
+\section{The Erd\H{o}s--R\'enyi random graph}
+% =====================================================================
+
+\begin{definition}{The random graph $G(n,p)$}{gnp}
+$G(n,p)$ is the random graph on vertex set $[n]$ in which each of the $\binom n2$
+possible edges is present independently with probability $p=p(n)$. Its number of
+edges has mean $\binom n2 p$, and each vertex has degree
+$\mathrm{Binomial}(n-1,p)$ with mean $(n-1)p$.
+\end{definition}
+
+The utility of $G(n,p)$ for the probabilistic method is that subgraph counts are
+sums of indicators, so linearity computes their means instantly and the overlap
+structure controls their variances.
+
+\begin{proposition}{Expected subgraph count}{subgraph-count}
+For a fixed graph $H$ with $v_H$ vertices and $e_H$ edges, the expected number
+of copies of $H$ in $G(n,p)$ is $\Theta\bigl(n^{v_H}p^{e_H}\bigr)$.
+\end{proposition}
+
+\begin{proof}
+There are $\binom{n}{v_H}\cdot\tfrac{v_H!}{|\mathrm{Aut}(H)|}=\Theta(n^{v_H})$
+labelled copies of $H$ among the vertices, and each is present precisely when its
+$e_H$ edges all appear, probability $p^{e_H}$. Linearity multiplies the two.
+\end{proof}
+
+\begin{insight}
+Most thresholds can be read off this one proposition: the count $n^{v_H}p^{e_H}$
+crosses from $0$ to $\infty$ as $p$ passes $n^{-v_H/e_H}$, and for the densest
+subgraph that is the threshold. The first moment predicts the answer; the second
+moment (Chapter~4) confirms it by ruling out the copies all landing on a rare
+event. Keeping prediction and proof separate is the key to reading these
+arguments.
+\end{insight}
+
+% =====================================================================
+\section{Moment generating functions and the Chernoff method}
+% =====================================================================
+
+The exponential tail bounds of Chapter~5 all flow from one device.
+
+\begin{definition}{Moment generating function}{mgf}
+The \emph{moment generating function} of a random variable $X$ is
+$M_X(t)=\E\bigl[e^{tX}\bigr]$. For independent $X,Y$ it factorizes:
+$M_{X+Y}(t)=M_X(t)\,M_Y(t)$.
+\end{definition}
+
+\begin{proposition}{The Chernoff method}{chernoff-method}
+For any random variable $X$ and $t>0$,
+$\;\Prob(X\ge a)\le e^{-ta}\,M_X(t)$, and one is free to optimize over $t$.
+\end{proposition}
+
+\begin{proof}
+Apply Markov's inequality to the nonnegative variable $e^{tX}$ at level $e^{ta}$:
+$\Prob(X\ge a)=\Prob(e^{tX}\ge e^{ta})\le e^{-ta}\E[e^{tX}]$.
+\end{proof}
+
+\begin{insight}
+This short proposition is the whole Chernoff bound; the rest is bookkeeping. Its
+force is the factorization in Definition~\ref{def:mgf}: for independent summands
+the moment generating function is a product, so a question about a sum's tail
+becomes a per-term calculation, and optimizing $t$ gives the rate. Trading
+$X\ge a$ for $e^{tX}\ge e^{ta}$ is the step that lets independence do the work,
+and it is why these tails beat the variance bound of Section~A.5.
+\end{insight}

@@ -1,0 +1,373 @@
+% =====================================================================
+%  Chapter 3 — Alterations
+%  File: chapters/03_alterations.tex
+%  Styled to match Chapters 1-2 (boxed environments + Insight callouts).
+%  Cross-references Chapter 1 (alteration, 2-colourability baseline) and
+%  Appendix A (Markov) instead of repeating them.
+% =====================================================================
+\providecommand{\E}{\mathbb{E}}
+\providecommand{\Prob}{\mathbb{P}}
+\providecommand{\ind}{\mathbf{1}}
+
+\chapter{Alterations}
+\label{chap:alterations}
+
+The first moment, used bare, asks a random object to be perfect. The
+\emph{alteration method} asks only that it be \emph{nearly} perfect, then pays
+to repair the few defects. We met it briefly in Chapter~1, where a random
+$2$-colouring of $K_n$ was patched into a Ramsey colouring by deleting one
+vertex from each monochromatic clique (Theorem~\ref{thm:ramsey_alt}). The
+accounting is always the same: bound the expected number of blemishes by the
+first moment, subtract it from what you started with, and conclude that some
+outcome leaves enough behind. This chapter pushes the idea through four
+problems of increasing subtlety --- dominating sets, the Heilbronn triangle
+problem, graphs of high girth and high chromatic number, and the best known
+bound for two-colourable hypergraphs.
+
+\begin{insight}
+The reason alteration so often beats the bare first moment is a division of
+labour. A single random construction must simultaneously be large \emph{and}
+defect-free, and demanding both at once is wasteful. Alteration decouples them:
+make the object as large as you like and tolerate defects, then spend a
+controlled amount of that size erasing them. The net size is
+(initial size) $-$ (expected repairs), and as long as the repairs are a lower-order
+cost, you keep almost everything. Watch for this two-line structure --- build
+generously, then delete --- in every proof below.
+\end{insight}
+
+% =====================================================================
+\section{Dominating sets}
+% =====================================================================
+
+\begin{definition}{Dominating set}{dominating}
+In a graph $G=(V,E)$, a set $U\subseteq V$ is \emph{dominating} if every vertex
+outside $U$ has a neighbour inside $U$.
+\end{definition}
+
+\begin{theorem}{Small dominating sets}{dominating-thm}
+Every $n$-vertex graph with minimum degree $\delta\ge1$ has a dominating set of
+size at most
+\[
+  \frac{1+\log(\delta+1)}{\delta+1}\;n.
+\]
+\end{theorem}
+
+\begin{proof}
+Fix $p\in[0,1]$, to be chosen. Include each vertex in a random set $X$
+independently with probability $p$, and let
+\[
+  Y = V\setminus\bigl(X\cup N(X)\bigr)
+\]
+be the vertices that are neither chosen nor adjacent to a chosen vertex. Then
+$X\cup Y$ is dominating: any vertex outside it lies in $X\cup N(X)$, hence has a
+neighbour in $X$.
+
+A vertex $v$ lands in $Y$ only if $v$ and all of its $\deg(v)\ge\delta$
+neighbours avoid $X$ --- that is $1+\deg(v)\ge1+\delta$ independent misses --- so
+$\Prob(v\in Y)\le(1-p)^{1+\delta}$. By linearity,
+\[
+  \E|X\cup Y| = \E|X|+\E|Y|
+  \le pn + (1-p)^{1+\delta}n
+  \le \bigl(p + e^{-p(1+\delta)}\bigr)n,
+\]
+using $1-p\le e^{-p}$. The bracket is minimized at
+$p=\dfrac{\log(\delta+1)}{\delta+1}$, where $e^{-p(\delta+1)}=\dfrac{1}{\delta+1}$,
+giving the value $\dfrac{1+\log(\delta+1)}{\delta+1}$. Some outcome attains at
+most the expectation.
+\end{proof}
+
+\begin{insight}
+The trivial lower bound on a dominating set is $n/(\delta+1)$ --- each chosen
+vertex can cover at most $\delta+1$ vertices --- and this theorem says you can
+come within a $\log(\delta+1)$ factor of it. A greedy algorithm (repeatedly
+take the vertex covering the most as-yet-uncovered vertices) achieves the same
+order and is in fact the standard \textsc{Set-Cover} greedy, whose
+$\log$ factor is known to be unavoidable in general. What the alteration proof
+buys is brevity: the messy, history-dependent greedy analysis is replaced by a
+one-line expectation, with the optimal $p$ falling out of a single derivative.
+\end{insight}
+
+% =====================================================================
+\section{The Heilbronn triangle problem}
+% =====================================================================
+
+\begin{question}{Heilbronn's problem}{heilbronn-q}
+How should one place $n$ points in the unit square so that the smallest triangle
+they span is as large as possible? Writing
+\[
+  \Delta(n) = \sup_{\substack{S\subseteq[0,1]^2\\|S|=n}}\
+  \min_{\substack{p,q,r\in S\\\text{distinct}}} \operatorname{area}(pqr),
+\]
+how does $\Delta(n)$ behave?
+\end{question}
+
+Naive placements do poorly. Points equally spaced on a circle leave a triangle
+of area $\Theta(n^{-3})$ (three consecutive points), and a grid does worse
+still --- three collinear points give area zero. Heilbronn conjectured
+$\Delta(n)=O(n^{-2})$; Koml\'os, Pintz, and Szemer\'edi (1982) disproved it,
+showing $\Delta(n)\gtrsim n^{-2}\log n$ by an intricate random construction.
+Here is a simpler argument for the weaker --- but already conjecture-refuting in
+spirit --- bound $\Delta(n)\gtrsim n^{-2}$.
+
+\begin{theorem}{Many points, no small triangle}{heilbronn-thm}
+For every $n$ there is a set of $n$ points in $[0,1]^2$ in which every triple
+spans a triangle of area at least $cn^{-2}$, for an absolute constant $c>0$.
+\end{theorem}
+
+\begin{proof}
+Scatter $2n$ points independently and uniformly in $[0,1]^2$, and estimate the
+chance that a fixed triple is nearly collinear. The distance between two random
+points satisfies, by an annulus area estimate,
+$\Prob(|pq|\in[x,x+dx])\le 2\pi x\,dx$. Conditioning on $p,q$, the triangle
+$pqr$ has area at most $\varepsilon$ exactly when $r$ lies within distance
+$2\varepsilon/|pq|$ of the line through $p,q$, a strip of area
+$\lesssim \varepsilon/|pq|$ inside the square. Hence
+\[
+  \Prob\bigl(\operatorname{area}(pqr)\le\varepsilon\bigr)
+  \;\lesssim\;\int_0^{\sqrt2} 2\pi x\cdot\frac{\varepsilon}{x}\,dx
+  \;\asymp\;\varepsilon.
+\]
+Let $X$ count the triples of area at most $\varepsilon$. There are
+$\binom{2n}{3}=O(n^3)$ triples, so $\E[X]=O(\varepsilon n^3)$. Choosing
+$\varepsilon=c/n^2$ with $c$ small makes $\E[X]\le n$.
+
+Now \emph{alter}: delete one point from each offending triple. At least
+$2n-X$ points survive, with expectation $\E[2n-X]\ge n$, and the survivors
+contain no triangle of area below $\varepsilon=c/n^2$. Some outcome therefore
+leaves $\ge n$ points with every triangle of area $\ge cn^{-2}$.
+\end{proof}
+
+\begin{remark}{An explicit construction}{heilbronn-algebraic}
+A clean derandomization, due to Erd\H{o}s, matches $\Delta(n)\gtrsim n^{-2}$
+algebraically. For a prime $p$, the parabola points
+$\{(x,x^2)\bmod p : x\in\mathbb F_p\}$ contain no three collinear points (a
+parabola meets a line in at most two points), so viewed in the integer grid
+$[p]^2$, every triangle has area at least $1/2$ by Pick's theorem. Rescaling
+into the unit square gives $p$ points with all triangle areas
+$\gtrsim p^{-2}$; for general $n$, use a prime between $n$ and $2n$.
+\end{remark}
+
+\begin{insight}
+The probabilistic proof and the algebraic one make an instructive pair: the
+random construction is effortless to set up but yields an object one cannot
+write down, while the parabola is fully explicit yet requires the clever
+observation that ``no three collinear'' forces area $\ge1/2$ over the integers.
+The $\log n$ that Koml\'os--Pintz--Szemer\'edi gained over both comes from a far
+more careful random construction in which the deletions are correlated rather
+than treated independently --- a recurring theme: the easy alteration leaves a
+logarithmic factor on the table.
+\end{insight}
+
+% =====================================================================
+\section{Markov's inequality, recalled}
+% =====================================================================
+
+The next two sections lean on a single tail bound, proved in
+Appendix~\ref{chap:toolkit}: for a nonnegative random variable $X$ and any
+$a>0$,
+\[
+  \Prob(X\ge a)\le\frac{\E[X]}{a}.
+\]
+In words --- if $\E[X]$ is small, then $X$ is small typically, not merely on
+average. This is what lets the alteration method control not just the expected
+number of defects but the probability of having too many at once.
+
+% =====================================================================
+\section{High girth and high chromatic number}
+% =====================================================================
+
+A $k$-clique forces chromatic number at least $k$, a lower bound certified by
+purely local information. Is high chromatic number \emph{always} locally
+certifiable? The following construction says emphatically no: a graph can be
+locally indistinguishable from a tree --- no short cycles at all --- and still
+require many colours.
+
+\begin{definition}{Girth}{girth}
+The \emph{girth} of a graph is the length of its shortest cycle (infinite if the
+graph is a forest).
+\end{definition}
+
+\begin{theorem}{Erd\H{o}s 1959}{girth-chromatic}
+For every $k$ and $\ell$, there is a graph with girth greater than $\ell$ and
+chromatic number greater than $k$.
+\end{theorem}
+
+\begin{proof}
+Take the Erd\H{o}s--R\'enyi random graph $G\sim G(n,p)$ on $n$ vertices, each
+edge present independently with probability $p=(\log n)^2/n$. We control two
+features and then delete.
+
+\smallskip\noindent\emph{Short cycles.} Let $X$ count the cycles of length at
+most $\ell$. Since $K_n$ has $\binom ni(i-1)!/2\le n^i$ cycles of length $i$,
+linearity gives
+\[
+  \E[X]=\sum_{i=3}^{\ell}\binom ni\frac{(i-1)!}{2}\,p^i
+  \le\sum_{i=3}^{\ell}(np)^i
+  =\sum_{i=3}^{\ell}(\log n)^{2i}=o(n),
+\]
+as $\ell$ is constant. By Markov, $\Prob(X\ge n/2)\le \E[X]/(n/2)=o(1)$.
+
+\smallskip\noindent\emph{Large independent sets.} Recall
+$\chi(G)\ge |V(G)|/\alpha(G)$, where $\alpha$ is the independence number, so it
+suffices to keep $\alpha$ small. With $x=\lceil 3n/\log n\rceil=(3/p)\log n$,
+\[
+  \Prob\bigl(\alpha(G)\ge x\bigr)\le\binom nx(1-p)^{\binom x2}
+  < n^x e^{-p x(x-1)/2}
+  = \bigl(n\,e^{-p(x-1)/2}\bigr)^x = o(1),
+\]
+because $p(x-1)/2\sim\tfrac32\log n$ makes the base $n\cdot n^{-3/2}=n^{-1/2}$.
+
+\smallskip\noindent\emph{Alteration.} For $n$ large, both bad events have
+probability below $1/2$, so some $G$ has fewer than $n/2$ short cycles and
+$\alpha(G)\le 3n/\log n$. Delete one vertex from each cycle of length
+$\le\ell$ to obtain $G'$. Then $|V(G')|\ge n/2$, the girth exceeds $\ell$,
+$\alpha(G')\le\alpha(G)\le 3n/\log n$, and
+\[
+  \chi(G')\ge\frac{|V(G')|}{\alpha(G')}\ge\frac{n/2}{3n/\log n}
+  =\frac{\log n}{6}>k
+\]
+once $n$ is large enough.
+\end{proof}
+
+\begin{insight}
+This is the alteration method at full power, and the choice $p=(\log n)^2/n$ is
+delicate: $p$ must be small enough that short cycles are rare
+($np$ only polylogarithmic) yet large enough that independent sets are tiny.
+The conclusion is conceptually startling --- high chromatic number is a
+\emph{global} property, invisible to any bounded neighbourhood, since a girth
+exceeding $\ell$ means every ball of radius $\ell/2$ is a tree. Erd\H{o}s (1962)
+sharpened this: there are graphs of chromatic number $>k$ in which \emph{every}
+linear-sized subgraph is $3$-colourable, so even seeing a constant fraction of
+the graph need not reveal its true colourability.
+\end{insight}
+
+% =====================================================================
+\section{Random greedy colouring}
+% =====================================================================
+
+In Chapter~1 we showed (Theorem~\ref{thm:hyper_lower}) that any $k$-uniform
+hypergraph with fewer than $2^{k-1}$ edges is $2$-colourable. We now improve the
+threshold by a factor of order $\sqrt{k/\log k}$, via a random greedy colouring.
+
+\begin{theorem}{Radhakrishnan--Srinivasan 2000}{greedy-colouring}
+There is a constant $c>0$ such that every $k$-uniform hypergraph with at most
+$c\sqrt{\dfrac{k}{\log k}}\;2^{k}$ edges is $2$-colourable.
+\end{theorem}
+
+\begin{proof}
+Order the vertices by a uniformly random permutation and colour greedily from
+left to right: make each vertex blue unless doing so would complete an
+all-blue edge, in which case make it red. By construction no edge is all blue,
+so the colouring fails only if some edge ends up all red.
+
+\smallskip\noindent\emph{Conflicting pairs.} If a red edge appears, its last
+vertex $v$ was forced red, meaning $v$ already completed an all-blue edge $e$
+(so $v$ is the \emph{last} vertex of $e$) while also being the \emph{first}
+vertex of the red edge $f$. Thus there are two edges $e,f$ sharing the single
+vertex $v$, with $v$ last in $e$ and first in $f$; call such an ordered pair
+\emph{conflicting}. Crucially, whether $(e,f)$ conflicts depends only on the
+random ordering, not on the colours. For two edges meeting in exactly one
+vertex (so $2k-1$ vertices in all), conflict requires $v$ to follow the other
+$k-1$ vertices of $e$ and precede the other $k-1$ of $f$:
+\[
+  \Prob\bigl((e,f)\text{ conflicts}\bigr)=\frac{(k-1)!^2}{(2k-1)!}
+  \asymp k^{-1/2}2^{-2k}.
+\]
+Summing over the at most $m^2$ such ordered pairs, the expected number of
+conflicting pairs is $\lesssim m^2 k^{-1/2}2^{-2k}$, which is below $1$ once
+$m\asymp k^{1/4}2^k$. This already gives a bound (Pluh\'ar 2009); we now sharpen
+it.
+
+\smallskip\noindent\emph{The $L\cup M\cup R$ refinement.} Instead of a bare
+permutation, drop each vertex at an independent uniform position in $[0,1]$, and
+split the interval (with $p$ to be chosen) into
+\[
+  L=\Bigl[0,\tfrac{1-p}2\Bigr),\quad
+  M=\Bigl[\tfrac{1-p}2,\tfrac{1+p}2\Bigr],\quad
+  R=\Bigl(\tfrac{1+p}2,1\Bigr].
+\]
+A fixed edge lands entirely in $L$ with probability $(\tfrac{1-p}2)^k$, and
+likewise for $R$, so
+\[
+  \Prob(\text{some edge lies in }L\text{ or }R)\le 2m\Bigl(\tfrac{1-p}2\Bigr)^k.
+\]
+Suppose no edge lies wholly in $L$ or $R$. If $(e,f)$ conflicts with shared
+vertex $v$, then every vertex of $e$ precedes $v$ and every vertex of $f$
+follows it; were $v\in L$ then $e\subseteq L$, and were $v\in R$ then
+$f\subseteq R$ --- both excluded. So $v\in M$, and
+\[
+  \Prob\bigl((e,f)\text{ conflicts, }v\in M\bigr)
+  =\int_{(1-p)/2}^{(1+p)/2}x^{k-1}(1-x)^{k-1}\,dx
+  \le p\,4^{-k+1},
+\]
+using $x(1-x)\le\tfrac14$. Union-bounding over $\le m^2$ pairs and combining,
+\[
+  \Prob(\text{some conflict})
+  \le 2m\Bigl(\tfrac{1-p}2\Bigr)^k + m^2 p\,4^{-k+1}
+  < 2^{-k+1}m\,e^{-pk} + \bigl(2^{-k+1}m\bigr)^2 p.
+\]
+Setting $p=\dfrac{1}{k}\log\!\dfrac{2^{k-1}k}{m}$ to minimize the right-hand
+side makes it
+\[
+  \frac{m^2}{4^{k-1}k}\Bigl(1+\log\tfrac{2^{k-1}k}{m}\Bigr),
+\]
+which is $<1$ when $m=c\,2^k\sqrt{k/\log k}$ for a small constant $c>0$ (taking
+$k$ large enough that $p\in[0,1]$; small $k$ are absorbed by shrinking $c$).
+With positive probability there is then no conflicting pair, so the greedy
+colouring produces no red edge and succeeds.
+\end{proof}
+
+\begin{insight}
+Where did the improvement come from? The expected number of conflicting pairs
+is essentially unchanged --- the $L\cup M\cup R$ device does not make conflicts
+rarer on average. What it does is \emph{cluster} the bad events. By first paying
+a cheap union bound to forbid any edge from sitting in an extreme block, the
+remaining conflicts are confined to a shared common vertex in the thin middle
+strip $M$, and the second-order term picks up a factor $p$ (the width of $M$)
+that a naive count would miss. Exploiting positive correlation among bad events
+that share a localized cause --- rather than bounding them as if independent ---
+is the engine of the gain, and squeezing more out of this idea remains an
+intriguing open problem.
+\end{insight}
+
+% =====================================================================
+\section*{Exercises}
+\addcontentsline{toc}{section}{Exercises}
+% =====================================================================
+
+\begin{enumerate}[itemsep=4pt]
+  \item Using the alteration method, prove the Ramsey bound
+        $R(4,k)\ge c\,(k/\log k)^2$ for some constant $c>0$.
+  \item Prove that every $3$-uniform hypergraph with $n$ vertices and $m\ge n$
+        edges contains an independent set (a vertex set spanning no edge) of size
+        at least $c\,n^{3/2}/\sqrt m$, for a constant $c>0$.
+  \item Prove that every $k$-uniform hypergraph with $n$ vertices and $m$ edges
+        has a transversal (a vertex set meeting every edge) of size at most
+        $n(\log k)/k+m/k$.
+  \item (Zarankiewicz.) Prove that for all $n\ge k\ge2$ there is an $n\times n$
+        $\{0,1\}$-matrix with at least $\tfrac12 n^{2-2/(k+1)}$ ones containing no
+        all-ones $k\times k$ submatrix.
+  \item Fix $k$. Prove there is a constant $c_k>1$ so that for all large $n$
+        there exist at least $c_k^{\,n}$ subsets of $[n]$ such that for every $k$
+        distinct members $F_1,\dots,F_k$, all $2^k$ intersections
+        $\bigcap_i G_i$ are nonempty, where each $G_i$ is $F_i$ or its complement.
+  \item (Acute sets.) Prove that for some $c>0$ and every $n$ there are at least
+        $c\,(2/\sqrt3)^n$ subsets of $[n]$ with no three distinct members
+        $A,B,C$ satisfying $A\cap B\subseteq C\subseteq A\cup B$; deduce a set of
+        $\ge c\,(2/\sqrt3)^n$ points in $\mathbb R^n$ spanning only acute angles.
+  \item $\bigstar$ Covering complements of sparse graphs by cliques.
+        \begin{enumerate}
+          \item Prove every $n$-vertex graph with minimum degree $n-d$ is a union
+                of $O(d^2\log n)$ cliques.
+          \item Prove every bipartite graph with $n$ vertices per side and minimum
+                degree $n-d$ ($d\ge1$) is a union of $O(d\log n)$ complete
+                bipartite graphs.
+        \end{enumerate}
+  \item $\bigstar$ Let $G$ have $n$ vertices and minimum degree $\delta\ge2$.
+        Prove there is $A\subseteq V$ with $|A|=O(n(\log\delta)/\delta)$ such that
+        every vertex outside $A$ has a neighbour in $A$ \emph{and} a neighbour
+        outside $A$.
+  \item $\bigstar$ Prove every graph $G$ without isolated vertices has an induced
+        subgraph on at least $\alpha(G)/2$ vertices in which every vertex has odd
+        degree.
+\end{enumerate}

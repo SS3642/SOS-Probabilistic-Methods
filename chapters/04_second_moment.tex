@@ -1,0 +1,356 @@
+% =====================================================================
+%  Chapter 4 — The Second Moment Method
+%  File: chapters/04_second_moment.tex
+% =====================================================================
+\providecommand{\E}{\mathbb{E}}
+\providecommand{\Prob}{\mathbb{P}}
+\providecommand{\Var}{\operatorname{Var}}
+\providecommand{\Cov}{\operatorname{Cov}}
+\providecommand{\whp}{\textit{whp}}
+
+\chapter{The Second Moment Method}
+\label{chap:second-moment}
+
+The first moment gives the mean of a random variable but nothing about its
+spread. The \emph{second moment method} adds that control: if the variance of
+$X$ is small next to $\E[X]^2$, then $X$ rarely strays far from its mean, and in
+particular is usually positive. Throughout, \whp\ (``with high probability'')
+means with probability tending to $1$ as $n\to\infty$.
+
+\begin{proposition}{The second-moment criterion}{criterion}
+For a nonnegative random variable $X$ with $\E[X]>0$,
+\[
+  \Prob(X=0)\le\frac{\Var(X)}{\E[X]^2}.
+\]
+Consequently, if $\E[X]>0$ and $\Var(X)=o\bigl(\E[X]^2\bigr)$ along a sequence,
+then $X>0$ \whp.
+\end{proposition}
+
+\begin{proof}
+If $X=0$ then $|X-\E X|=\E X$, so $\{X=0\}\subseteq\{|X-\E X|\ge\E X\}$, and
+Chebyshev's inequality (Appendix~\ref{chap:toolkit}, Theorem~\ref{thm:chebyshev})
+bounds the latter by $\Var(X)/\E[X]^2$.
+\end{proof}
+
+\begin{insight}
+A second-moment proof is really a claim that the summands are nearly
+uncorrelated. The mean $\E[X]=\sum_i\E[X_i]$ ignores dependence; the variance
+$\Var(X)=\sum_i\Var(X_i)+\sum_{i\ne j}\Cov(X_i,X_j)$ measures it. So the work is
+always to check that the covariance sum is small next to $\E[X]^2$. When it is,
+we can pass from ``$\E[X]>0$'' to ``$X>0$ \whp'', which is what locating a
+threshold requires.
+\end{insight}
+
+% =====================================================================
+\section{Does a random graph contain a triangle?}
+% =====================================================================
+
+The \emph{Erd\H{o}s--R\'enyi random graph} $G(n,p)$ has $n$ vertices, each of the
+$\binom n2$ edges present independently with probability $p$ (Appendix~\ref{chap:toolkit}).
+
+\begin{question}{Triangle threshold}{triangle-q}
+For which $p=p(n)$ does $G(n,p)$ contain a triangle \whp?
+\end{question}
+
+Let $X$ count the triangles. There are $\binom n3$ candidate triples, each a
+triangle with probability $p^3$, so $\E[X]=\binom n3 p^3\asymp (np)^3$. This
+suggests the transition happens near $p\asymp 1/n$, and the two moments confirm
+it from opposite sides.
+
+\begin{theorem}{Triangle threshold}{triangle-threshold}
+If $np\to0$ then $G(n,p)$ is triangle-free \whp; if $np\to\infty$ then $G(n,p)$
+contains a triangle \whp. Thus $p=1/n$ is a threshold.
+\end{theorem}
+
+\begin{proof}
+If $np\to0$ then $\E[X]\asymp(np)^3\to0$, and Markov gives
+$\Prob(X\ge1)\le\E[X]\to0$: no triangle \whp.
+
+If $np\to\infty$ we use the second moment. Write $X=\sum_S\ind_S$ over triples
+$S$. Two triangle-indicators are dependent only when their triples share an
+edge, i.e.\ share two vertices. Grouping the covariance sum by overlap, the
+only nonzero contributions come from pairs sharing exactly one edge (four
+vertices, five edges), of which there are $\Theta(n^4)$, each contributing
+$\Theta(p^5)$. Hence
+\[
+  \Var(X)\;\lesssim\;\E[X] + n^4 p^5\;\asymp\;n^3p^3+n^4p^5,
+\]
+while $\E[X]^2\asymp n^6p^6$. Therefore
+\[
+  \frac{\Var(X)}{\E[X]^2}\;\lesssim\;\frac{1}{(np)^3}+\frac{1}{n^2p}
+  \;=\;\frac1{(np)^3}+\frac1{n\cdot(np)}\;\to\;0,
+\]
+so $X>0$ \whp\ by Proposition~\ref{prop:criterion}.
+\end{proof}
+
+\begin{insight}
+The two moments split the work at the threshold. Below it $\E[X]\to0$, so Markov
+alone kills the triangles. Above it $\E[X]\to\infty$ only says triangles are
+expected on average; the variance bound is what rules out their all appearing
+together on a rare event, and it is small here precisely because two random
+triangles seldom share an edge. Right at $np\to c$ neither moment decides the
+question, and the triangle count converges to a Poisson limit --- the threshold
+is coarse, turning on over a constant factor rather than sharply.
+\end{insight}
+
+% =====================================================================
+\section{Thresholds for fixed subgraphs}
+% =====================================================================
+
+The triangle argument generalizes to any fixed graph $H$, but with a twist: the
+threshold is governed not by $H$ itself but by its densest subgraph.
+
+\begin{definition}{Edge density and $m(H)$}{density}
+The \emph{edge--vertex ratio} of a graph $H$ is $\rho(H)=e_H/v_H$ (half the
+average degree), and
+\[
+  m(H)=\max_{H'\subseteq H}\rho(H').
+\]
+\end{definition}
+
+The proof uses a packaged form of the second-moment estimate.
+
+\begin{lemma}{Second-moment criterion via overlaps}{delta}
+Let $X=\sum_i\ind_{A_i}$ with $i\sim j$ meaning $A_i,A_j$ are dependent, and set
+$\Delta^\ast=\max_i\sum_{j\sim i}\Prob(A_j\mid A_i)$. If $\E[X]\to\infty$ and
+$\Delta^\ast=o(\E[X])$, then $X>0$ \whp.
+\end{lemma}
+
+\begin{proof}
+Since $\Var(X)\le\E[X]+\sum_i\Prob(A_i)\sum_{j\sim i}\Prob(A_j\mid A_i)
+\le\E[X]\,(1+\Delta^\ast)$, Proposition~\ref{prop:criterion} gives
+$\Prob(X=0)\le(1+\Delta^\ast)/\E[X]\to0$.
+\end{proof}
+
+\begin{theorem}{Subgraph threshold; Bollob\'as 1981}{subgraph-threshold}
+For any fixed graph $H$, the function $p=n^{-1/m(H)}$ is a threshold for $G(n,p)$
+to contain a copy of $H$.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Let $H'\subseteq H$ attain $\rho(H')=m(H)$. Below the threshold,
+$\E[X_{H'}]\asymp n^{v_{H'}}p^{e_{H'}}=o(1)$, so $G(n,p)$ has no copy of $H'$,
+hence none of $H$. Above the threshold, $\E[X_H]\to\infty$, and one checks
+$\Delta^\ast=o(\E[X_H])$: the dominant overlaps between two copies of $H$
+occur along a common subgraph $J$, and the condition $p\gg n^{-1/m(H)}\ge
+n^{-1/\rho(J)}$ makes every such overlap term negligible against $\E[X_H]$.
+Lemma~\ref{lem:delta} finishes the proof.
+\end{proof}
+
+\begin{insight}
+A random graph gets $H$ as soon as it gets $H$'s densest subgraph; a sparse
+piece hanging off a dense core shows up earlier and plays no role. That is why
+the threshold is $n^{-1/m(H)}$ rather than $n^{-1/\rho(H)}$: for a pendant edge
+on $K_4$ one has $\rho=7/5$ but $m=\rho(K_4)=3/2$, and it is the $K_4$ the graph
+waits for.
+\end{insight}
+
+% =====================================================================
+\section{The existence of thresholds}
+% =====================================================================
+
+Both examples above have a threshold. Is this a coincidence? For \emph{monotone}
+properties it never is.
+
+\begin{definition}{Threshold}{threshold}
+A property $\mathcal P$ of $G(n,p)$ is \emph{increasing} if adding edges preserves
+it. A sequence $r_n$ is a \emph{threshold} for $\mathcal P$ if $\Prob(G(n,p)\in
+\mathcal P)\to0$ when $p/r_n\to0$ and $\to1$ when $p/r_n\to\infty$.
+\end{definition}
+
+\begin{theorem}{Bollob\'as--Thomason 1987}{threshold-exists}
+Every nontrivial increasing property has a threshold.
+\end{theorem}
+
+\begin{proof}[Proof idea]
+Monotonicity makes $p\mapsto\Prob(G(n,p)\in\mathcal P)$ strictly increasing, so a
+\emph{critical} probability $p_c$ with $\Prob(G(n,p_c)\in\mathcal P)=1/2$ is
+well defined. A \emph{multiple-exposure} argument --- running $m$ independent
+copies of $G(n,p_c)$ and taking their union, which stochastically dominates
+$G(n,mp_c)$ --- shows the probability jumps from near $0$ to near $1$ as $p$ moves
+from $p_c/m$ to $mp_c$. Hence $p_c$ itself is a threshold.
+\end{proof}
+
+\begin{insight}
+The theorem gives a threshold but not its width. Some properties ---
+connectivity, or containing a fixed subgraph --- are sharp, with a transition
+window narrower than the threshold; others, like containing a triangle at
+$p=c/n$, are coarse, spread over a constant factor. Telling the two apart is
+what the Friedgut--Bourgain theory of sharp thresholds is about.
+\end{insight}
+
+% =====================================================================
+\section{The clique number of \texorpdfstring{$G(n,1/2)$}{G(n,1/2)}}
+% =====================================================================
+
+Let $\omega(G)$ be the clique number. For $G(n,1/2)$ the second moment pins it
+down to two values. Write $f(n,k)=\binom nk 2^{-\binom k2}$, the expected number
+of $k$-cliques.
+
+\begin{theorem}{Second-moment bound for the clique number}{clique-sm}
+If $f(n,k)\to0$ then $\omega(G(n,1/2))<k$ \whp; if $f(n,k)\to\infty$ then
+$\omega(G(n,1/2))\ge k$ \whp.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+The first claim is Markov: $\Prob(\omega\ge k)\le\E[X]=f(n,k)\to0$, where $X$
+counts $k$-cliques. For the second, apply Lemma~\ref{lem:delta}: two $k$-sets
+$S,T$ are dependent only if $|S\cap T|\ge2$, and summing
+$\Prob(A_T\mid A_S)=2^{\binom{|S\cap T|}2-\binom k2}$ over such $T$ gives
+$\Delta^\ast\ll\E[X]$ when $f(n,k)\to\infty$.
+\end{proof}
+
+\begin{theorem}{Two-point concentration; Bollob\'as--Erd\H{o}s, Matula 1976}{clique-2pt}
+There is $k=k(n)\sim 2\log_2 n$ with
+$\omega(G(n,1/2))\in\{k,k+1\}$ \whp.
+\end{theorem}
+
+\begin{proof}
+The ratio of consecutive expectations is
+\[
+  \frac{f(n,k+1)}{f(n,k)}=\frac{n-k}{k+1}\,2^{-k}=n^{-1+o(1)}
+  \qquad(k\sim2\log_2 n),
+\]
+so $f(n,k)$ plunges through every fixed level in a single step of $k$. Choose
+$k_0\sim2\log_2 n$ with $f(n,k_0)\ge n^{-1/2}>f(n,k_0+1)$. Then
+$f(n,k_0-1)\to\infty$ and $f(n,k_0+1)\to0$, so by Theorem~\ref{thm:clique-sm}
+the clique number is confined to $\{k_0-1,k_0\}$ \whp.
+\end{proof}
+
+\begin{insight}
+Two-point concentration is a strong conclusion: an optimization over
+exponentially many subsets lands on one of two consecutive integers near
+$2\log_2 n$. It works because $f(n,k)$ falls by a factor of about $n$ each time
+$k$ grows by one, so there is no room in between. The same sharpness makes
+$G(n,1/2)$ a convenient source of extremal objects --- its clique and independence
+numbers are both $\sim2\log_2 n$ almost surely --- and Chapter~5 uses the
+independence number to break the Haj\'os conjecture.
+\end{insight}
+
+% =====================================================================
+\section{Hardy--Ramanujan and Erd\H{o}s--Kac}
+% =====================================================================
+
+The second moment reaches beyond graphs. Let $\nu(m)$ be the number of distinct
+prime divisors of $m$.
+
+\begin{theorem}{Hardy--Ramanujan 1917}{hardy-ramanujan}
+For all but $o(n)$ of the integers $m\le n$, $\;\nu(m)=(1+o(1))\log\log n$.
+\end{theorem}
+
+\begin{proof}[Tur\'an's second-moment proof]
+Pick $m$ uniformly from $[n]$ and write $\nu(m)\approx\sum_{p\le n}X_p$ where
+$X_p=\ind_{p\mid m}$. Then $\E[X_p]=\lfloor n/p\rfloor/n\approx1/p$, so by
+Mertens' theorem $\E[\nu]\approx\sum_{p\le n}1/p\approx\log\log n$. The pairs
+$X_p,X_q$ are nearly uncorrelated ($\E[X_pX_q]\approx1/(pq)$ up to negligible
+error), so $\Var(\nu)\approx\sum_p\tfrac1p(1-\tfrac1p)\approx\log\log n$ as well.
+Chebyshev then gives $\nu(m)=(1+o(1))\log\log n$ outside an $o(n)$-sized
+exceptional set.
+\end{proof}
+
+\begin{insight}
+The heuristic is that ``divisible by $p$'' behaves like an independent coin of
+bias $1/p$ across the primes. The second moment makes this precise enough to get
+concentration; the method of moments pushes it to a central limit theorem
+(Erd\H{o}s--Kac): $\bigl(\nu(m)-\log\log n\bigr)/\sqrt{\log\log n}$ tends to a
+standard normal as $m$ ranges over $[n]$. That result is where probabilistic
+number theory began.
+\end{insight}
+
+% =====================================================================
+\section{Sets with distinct subset sums}
+% =====================================================================
+
+\begin{question}{Distinct sums}{distinct-q}
+How small can the largest element of a set of $n$ positive integers be, if all
+$2^n$ subset sums are distinct? (Powers of two give largest element $2^{n-1}$;
+can one do better?)
+\end{question}
+
+\begin{theorem}{Erd\H{o}s's lower bound}{distinct-sums}
+If $a_1<\cdots<a_n$ are positive integers with distinct subset sums, then
+$a_n\ge c\,2^n/\sqrt n$ for an absolute constant $c>0$.
+\end{theorem}
+
+\begin{proof}
+Let $\varepsilon_1,\dots,\varepsilon_n$ be independent uniform signs and put
+$X=\sum_i\varepsilon_i a_i$. Then $\E[X]=0$ and
+$\Var(X)=\sum_i a_i^2\le n\,a_n^2$. By Chebyshev, at least $\tfrac34$ of the
+$2^n$ sign patterns yield $|X|\le 2\sqrt{\Var(X)}\le 2\sqrt n\,a_n$, i.e.\ lie
+in an interval of length $4\sqrt n\,a_n$. But distinct subset sums force the
+$2^n$ values of $X$ to be distinct integers, and an interval of length $L$
+holds at most $L+1$ of them. Hence $\tfrac34\cdot2^n\le 4\sqrt n\,a_n+1$, giving
+$a_n\ge c\,2^n/\sqrt n$.
+\end{proof}
+
+\begin{insight}
+The bound comes from the spread of a random signed sum, not from any
+construction. Chebyshev forces the $2^n$ subset sums into an interval of width
+$O(\sqrt n\,a_n)$; distinctness lets only $O(\sqrt n\,a_n)$ integers sit there;
+comparing the two makes $a_n$ exponential. Erd\H{o}s offered money for closing
+the $\sqrt n$ gap to the conjectured $a_n\ge c\,2^n$; Dubroff, Fox, and Xu
+(2021) reached $2^n/\sqrt n$ with the best known constant, using Harper's
+vertex-isoperimetric inequality on the cube.
+\end{insight}
+
+% =====================================================================
+\section{The Weierstrass approximation theorem}
+% =====================================================================
+
+The method is not confined to combinatorics; here it proves a classical
+analysis theorem.
+
+\begin{theorem}{Weierstrass 1885}{weierstrass}
+Every continuous $f\colon[0,1]\to\mathbb R$ is a uniform limit of polynomials.
+\end{theorem}
+
+\begin{proof}
+Define the Bernstein polynomials
+$B_n(x)=\sum_{k=0}^n f\!\bigl(\tfrac kn\bigr)\binom nk x^k(1-x)^{n-k}$. If
+$S\sim\mathrm{Binomial}(n,x)$ then $B_n(x)=\E\bigl[f(S/n)\bigr]$, and
+$S/n$ concentrates at $x$ because $\Var(S/n)=x(1-x)/n\le 1/(4n)$. Fix
+$\varepsilon>0$; uniform continuity gives $\delta$ with
+$|f(u)-f(v)|<\varepsilon$ when $|u-v|<\delta$, and $\|f\|_\infty=M<\infty$.
+Splitting on whether $|S/n-x|<\delta$,
+\[
+  |B_n(x)-f(x)|\le\E\bigl|f(S/n)-f(x)\bigr|
+  \le\varepsilon+2M\,\Prob\bigl(|S/n-x|\ge\delta\bigr)
+  \le\varepsilon+\frac{2M}{4n\delta^2},
+\]
+using Chebyshev. The bound is uniform in $x$ and $<2\varepsilon$ for $n$ large,
+so $B_n\to f$ uniformly.
+\end{proof}
+
+\begin{insight}
+A Bernstein polynomial is an expectation: flip $n$ coins of bias $x$, see where
+the average lands, and read off $f$ there. Since $S/n$ concentrates at $x$, its
+average value of $f$ sits near $f(x)$. The point worth keeping is that the same
+variance estimate used for random graphs also settles a theorem in
+approximation theory.
+\end{insight}
+
+% =====================================================================
+\section*{Exercises}
+\addcontentsline{toc}{section}{Exercises}
+% =====================================================================
+
+\begin{enumerate}[itemsep=4pt]
+  \item Let $X\ge0$ with $\Prob(X=0)<1$. Prove
+        $\Prob(X=0)\le\Var(X)/\E[X^2]$.
+  \item For $X$ with mean $\mu$ and variance $\sigma^2$, prove the one-sided
+        bound $\Prob(X\ge\mu+\lambda)\le\sigma^2/(\sigma^2+\lambda^2)$ for all
+        $\lambda>0$.
+  \item (Threshold for $k$-APs.) For $[n]_p$ the random subset keeping each
+        element with probability $p$, determine the threshold for containing a
+        $k$-term arithmetic progression, for each fixed $k\ge3$.
+  \item Determine the threshold function for $G(n,p)$ to contain a cycle.
+  \item Show that for each fixed $k$ there is a sequence $p_n$ with
+        $\Prob\bigl(G(n,p_n)\text{ has a component of exactly }k\text{ vertices}\bigr)\to1$.
+  \item (Poisson limit.) For $X$ the number of triangles in $G(n,c/n)$, compute
+        $\lim_n\E\binom Xk$ for each $k$, match it to
+        $\mathrm{Binomial}(n,\lambda/n)$, and deduce the limiting distribution of
+        $X$ and of $\Prob(X>0)$.
+  \item (CLT for triangle counts.) With $X$ the triangle count and $Y$ the edge
+        count of $G(n,1/2)$, find $a_n$ with $\Var(X-a_nY)=o(\Var X)$, and deduce
+        that $X$ is asymptotically normal.
+\end{enumerate}

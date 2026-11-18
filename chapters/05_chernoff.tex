@@ -1,0 +1,193 @@
+% =====================================================================
+%  Chapter 5 — The Chernoff Bound
+%  File: chapters/05_chernoff.tex
+% =====================================================================
+\providecommand{\E}{\mathbb{E}}
+\providecommand{\Prob}{\mathbb{P}}
+\providecommand{\Var}{\operatorname{Var}}
+\providecommand{\whp}{\textit{whp}}
+
+\chapter{The Chernoff Bound}
+\label{chap:chernoff}
+
+Chebyshev bounds a deviation by the variance, and decays only polynomially. For
+a sum of independent bounded variables the tail is far smaller --- exponential,
+on the Gaussian scale. The Chernoff bound captures this, and it underlies most
+of the concentration arguments that follow.
+
+\begin{theorem}{Chernoff bound}{chernoff-pm}
+Let $S_n=X_1+\cdots+X_n$ with the $X_i$ independent and uniform on $\{-1,+1\}$.
+Then for every $\lambda>0$,
+\[
+  \Prob\bigl(S_n\ge\lambda\sqrt n\bigr)\le e^{-\lambda^2/2},
+\]
+and the same bound holds for $\Prob(S_n\le-\lambda\sqrt n)$.
+\end{theorem}
+
+\begin{proof}
+For $t\ge0$, independence factorizes the moment generating function:
+\[
+  \E\bigl[e^{tS_n}\bigr]=\prod_{i=1}^n\E\bigl[e^{tX_i}\bigr]
+  =\Bigl(\frac{e^{t}+e^{-t}}2\Bigr)^n=(\cosh t)^n\le e^{nt^2/2},
+\]
+where $\cosh t=\sum_{k\ge0}t^{2k}/(2k)!\le\sum_{k\ge0}t^{2k}/(2^k k!)=e^{t^2/2}$.
+Markov applied to $e^{tS_n}$ gives
+$\Prob(S_n\ge\lambda\sqrt n)\le e^{-t\lambda\sqrt n}\E[e^{tS_n}]\le
+e^{nt^2/2-t\lambda\sqrt n}$; the choice $t=\lambda/\sqrt n$ minimizes the exponent
+and yields $e^{-\lambda^2/2}$.
+\end{proof}
+
+The same moment-generating-function method covers any independent bounded
+summands.
+
+\begin{theorem}{Chernoff for bounded variables}{chernoff-bounded}
+Let $X_1,\dots,X_n$ be independent with $X_i\in[-1,1]$ and $\E[X_i]=0$. Then
+$S_n=\sum_i X_i$ satisfies $\Prob(S_n\ge\lambda\sqrt n)\le e^{-\lambda^2/2}$, and
+likewise for the lower tail. In particular, a sum $X$ of independent Bernoullis
+with mean $\mu$ obeys $\Prob(|X-\mu|\ge\lambda\sqrt n)\le 2e^{-\lambda^2/2}$.
+\end{theorem}
+
+\begin{insight}
+Two comparisons place the bound. Against Chebyshev's $1/\lambda^2$, the
+exponential $e^{-\lambda^2/2}$ is what lets a union bound survive over
+exponentially many events. Against the Gaussian it is essentially tight: the
+same computation gives $\Prob(Z\ge\lambda)\le e^{-\lambda^2/2}$ for
+$Z\sim\mathcal N(0,1)$, off the true tail only by a factor $\sqrt{2\pi}\lambda$.
+The cost is independence --- Chernoff needs the full product structure to factor
+the moment generating function, where Chebyshev asks only for pairwise
+independence.
+\end{insight}
+
+% =====================================================================
+\section{Discrepancy}
+% =====================================================================
+
+Given a set system $S_1,\dots,S_m$ on a ground set $[n]$, a two-colouring
+$\chi\colon[n]\to\{-1,+1\}$ has \emph{discrepancy}
+$\operatorname{disc}(\chi)=\max_j\bigl|\sum_{i\in S_j}\chi(i)\bigr|$; the
+discrepancy of the system is the minimum over $\chi$. We ask how balanced a
+colouring can be forced to exist.
+
+\begin{theorem}{Random colouring discrepancy}{discrepancy}
+Any system of $m$ sets on $[n]$ has a two-colouring of discrepancy at most
+$\sqrt{2n\ln(2m)}$.
+\end{theorem}
+
+\begin{proof}
+Colour each point independently and uniformly. For a fixed set $S_j$ the sum
+$\sum_{i\in S_j}\chi(i)$ is a $\pm1$ sum of $|S_j|\le n$ terms, so by
+Theorem~\ref{thm:chernoff-pm},
+$\Prob\bigl(|\sum_{i\in S_j}\chi(i)|\ge\lambda\sqrt n\bigr)\le2e^{-\lambda^2/2}$.
+Taking $\lambda=\sqrt{2\ln(2m)}$ makes each bound $1/m$, and a union bound over
+the $m$ sets leaves positive probability that every set is balanced within
+$\lambda\sqrt n=\sqrt{2n\ln(2m)}$.
+\end{proof}
+
+For the balanced case $m=n$ this gives $O(\sqrt{n\log n})$. Remarkably, the
+logarithm is removable.
+
+\begin{theorem}{Six standard deviations suffice; Spencer 1985}{spencer}
+Any system of $n$ sets on $n$ points has a two-colouring of discrepancy at most
+$6\sqrt n$.
+\end{theorem}
+
+\begin{insight}
+The $\sqrt{\log n}$ gap between random and optimal is real but avoidable. The
+union bound treats the $n$ sets as independent adversaries and pays
+$\sqrt{\log n}$ to control them together; Spencer's theorem removes the tax, but
+not through any single random colouring. Its proof colours a constant fraction
+of the points at a time with discrepancy $O(\sqrt n)$ and iterates --- an early
+use of the pigeonhole-and-entropy method now standard in discrepancy theory.
+Whether the same holds when each point lies in few sets is the Beck--Fiala and
+Koml\'os problem, still open.
+\end{insight}
+
+% =====================================================================
+\section{Nearly orthogonal vectors}
+% =====================================================================
+
+How many unit vectors in $\mathbb R^n$ can be pairwise \emph{nearly} orthogonal?
+In the exact case at most $n$ vectors can be orthonormal, but relaxing to small
+inner products changes the answer dramatically.
+
+\begin{theorem}{Exponentially many nearly orthogonal vectors}{equiangular}
+There is a constant $c>0$ such that for every $n$ one can find
+$e^{cn}$ vectors in $\{-1,+1\}^n$ whose pairwise inner products all satisfy
+$|\langle u,v\rangle|\le C\sqrt{n\log(1/\!\cos)}$; normalizing by $1/\sqrt n$
+yields $e^{cn}$ unit vectors with all pairwise inner products $O(\sqrt{(\log)/n})$.
+\end{theorem}
+
+\begin{proof}[Proof idea]
+Take $N=e^{cn}$ independent uniform vectors in $\{-1,+1\}^n$. For a fixed pair,
+$\langle u,v\rangle=\sum_i u_iv_i$ is a $\pm1$ sum of $n$ independent terms, so
+by Theorem~\ref{thm:chernoff-pm} it exceeds $\lambda\sqrt n$ in absolute value
+with probability at most $2e^{-\lambda^2/2}$. Union-bounding over the
+$\binom N2<e^{2cn}$ pairs with $\lambda=\Theta(\sqrt n)$ leaves positive
+probability that every pair is nearly orthogonal; choosing $c$ small keeps the
+union bound below $1$.
+\end{proof}
+
+\begin{insight}
+Exact orthogonality caps you at $n$ vectors; near-orthogonality is a much softer
+condition that random sign vectors satisfy exponentially often, because two of
+them have a normalized inner product that is a mean of $n$ signs and hence
+small. This is concentration of measure in one line, and the same fact drives
+Johnson--Lindenstrauss dimension reduction.
+\end{insight}
+
+% =====================================================================
+\section{A counterexample to the Haj\'os conjecture}
+% =====================================================================
+
+Haj\'os conjectured that every graph of chromatic number at least $k$ contains a
+subdivision of $K_k$ (a \emph{topological} $K_k$). The random graph refutes this
+for large $k$, combining the clique-number concentration of Chapter~4 with a
+Chernoff degree estimate.
+
+\begin{theorem}{Erd\H{o}s--Fajtlowicz 1981}{hajos}
+For all large $n$, the graph $G(n,1/2)$ has chromatic number
+$\chi\sim n/(2\log_2 n)$ but its largest topological clique has order
+$O(\sqrt n)$. In particular Haj\'os's conjecture fails.
+\end{theorem}
+
+\begin{proof}[Proof idea]
+By Theorem~\ref{thm:clique-2pt} the independence number of $G(n,1/2)$ is
+$\sim2\log_2 n$ \whp, so $\chi\ge n/\alpha\sim n/(2\log_2 n)$; a greedy argument
+gives a matching upper bound. On the other hand a topological $K_t$ uses $t$
+branch vertices pairwise joined by internally disjoint paths, so it needs
+$\binom t2$ edge-disjoint connections among $t$ vertices --- and a Chernoff bound
+on vertex degrees shows $G(n,1/2)$ simply lacks the connectivity to support
+$t\gg\sqrt n$ branch vertices \whp. Since $n/\log n\gg\sqrt n$, the chromatic
+number vastly exceeds the largest topological clique.
+\end{proof}
+
+\begin{insight}
+The refutation splits across two chapters. The second moment fixes the
+independence number, hence $\chi\sim n/(2\log_2 n)$; a Chernoff degree bound
+caps the largest topological clique at $O(\sqrt n)$. Neither alone suffices, but
+together they open a polynomial gap between the two quantities Haj\'os assumed
+were linked. Sharp concentration of both parameters is exactly what makes
+$G(n,1/2)$ a good place to hunt for counterexamples.
+\end{insight}
+
+% =====================================================================
+\section*{Exercises}
+\addcontentsline{toc}{section}{Exercises}
+% =====================================================================
+
+\begin{enumerate}[itemsep=4pt]
+  \item Prove that with probability $1-o(1)$, every bipartite subgraph of
+        $G(n,1/2)$ has at most $n^2/8+10n^{3/2}$ edges.
+  \item (Unbalancing lights, upper bound.) Prove there is a constant $C$ so that
+        for every $n$ there is a $\{-1,1\}$ matrix $A$ with
+        $|y^\top A x|\le Cn^{3/2}$ for all $x,y\in\{-1,1\}^n$.
+  \item Prove there is a constant $c>1$ so that for every $n$ there are at least
+        $c^n$ points in $\mathbb R^n$ whose every triple spans a triangle with all
+        angles below $61^\circ$.
+  \item (Planted clique.) Give a deterministic polynomial-time algorithm that,
+        on the union of $G(n,1/2)$ and an unlabelled clique of size
+        $t=100\sqrt{n\log n}$, recovers a clique of size $t$ \whp.
+  \item (Weighing coins.) You have $n$ coins of two known weights. A scale reports
+        the total weight of any chosen subset. Show $O(n/\log n)$ weighings suffice
+        to determine every coin's weight.
+\end{enumerate}

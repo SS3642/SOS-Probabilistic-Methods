@@ -1,0 +1,577 @@
+% =====================================================================
+%  Chapter 2 — Linearity of Expectation
+%  File: chapters/02_linearity.tex
+%  Built from the handout; deliberately avoids material already covered
+%  in Chapter 1 (notably the full proof of Szele's theorem and the
+%  general method of conditional expectations).
+% =====================================================================
+\providecommand{\E}{\mathbb{E}}
+\providecommand{\Prob}{\mathbb{P}}
+\providecommand{\ind}{\mathbf{1}}
+\providecommand{\cross}{\operatorname{cr}}
+
+\chapter{Linearity of Expectation}
+\label{chap:linearity}
+
+In Chapter~1 we used the first moment mostly as a switch that turns ``positive
+probability'' into ``existence.'' This chapter develops the same idea into a
+quantitative instrument. The engine throughout is a single identity: for
+random variables $X_1,\dots,X_n$ and scalars $c_1,\dots,c_n$,
+\[
+  \E\!\Big[\textstyle\sum_i c_i X_i\Big] = \sum_i c_i\,\E[X_i].
+\]
+Its decisive feature is what it omits --- there is \emph{no independence
+hypothesis}. Expectation is an integral against the probability measure, and
+integrals are linear regardless of how their summands interact. Products
+enjoy no such luxury: $\E[XY]=\E[X]\,\E[Y]$ holds only when $X$ and $Y$ are
+uncorrelated, and independence is merely a sufficient condition for that.
+
+We pair the identity with one elementary observation, used so often that it
+deserves a name.
+
+\begin{proposition}{The averaging principle}{averaging}
+For any random variable $X$ with finite mean, there is an outcome with
+$X\ge\E[X]$ and an outcome with $X\le\E[X]$.
+\end{proposition}
+
+\begin{proof}
+If $X<\E[X]$ held on the whole sample space, then taking expectations of both
+sides would give $\E[X]<\E[X]$, a contradiction; symmetrically for the other
+inequality.
+\end{proof}
+
+The recipe for the rest of the chapter is fixed: build a random object, write
+the quantity of interest as a sum of simple indicators, evaluate the
+expectation by linearity, and invoke the averaging principle to extract a
+single good outcome.
+
+\begin{insight}
+The leverage is almost entirely in the \emph{decomposition}, not the
+arithmetic. Whenever a global count splits as $X=\sum_i X_i$ with each
+$\E[X_i]$ computable in isolation, linearity discards every correlation
+between the $X_i$ at no cost. That is exactly why the method dominates
+``average case'' counting: the dependence that defeats exact enumeration is
+invisible to the first moment. The same blindness is the method's limitation
+--- it locates the mean but says nothing about concentration, which is the
+job of the second moment (Chapter~3).
+\end{insight}
+
+% =====================================================================
+\section{Warm-up: fixed points of a random permutation}
+% =====================================================================
+
+\begin{question}{Expected number of fixed points}{fixedpoints}
+What is the average number of fixed points of a uniformly random permutation
+of an $n$-element set?
+\end{question}
+
+\begin{proof}[Solution]
+Let $X_i$ be the indicator of the event $\pi(i)=i$, where $\pi$ is uniform on
+the symmetric group. A uniform permutation sends $i$ to each position with
+probability $1/n$, so $\E[X_i]=\Prob(\pi(i)=i)=1/n$. The number of fixed
+points is $X_1+\cdots+X_n$, and by linearity
+\[
+  \E[X_1+\cdots+X_n] = \sum_{i=1}^n \E[X_i] = n\cdot\frac1n = 1,
+\]
+independent of $n$.
+\end{proof}
+
+\begin{insight}
+The exact answer $1$, free of any error term, is the signature of linearity
+ignoring dependence: the $X_i$ are strongly correlated (fixing many points
+constrains the rest), yet none of that surfaces. The structure underneath is
+richer still. As $n\to\infty$ the number of fixed points converges to a
+$\mathrm{Poisson}(1)$ law, so the probability of \emph{no} fixed point tends
+to $e^{-1}$ --- the classical derangement constant. A variance computation
+gives $\operatorname{Var}=1$ as well, so the mean of $1$ is genuinely
+informative rather than washed out by spread.
+\end{insight}
+
+% =====================================================================
+\section{Hamilton paths in tournaments}
+% =====================================================================
+
+\begin{definition}{Tournament and Hamilton path}{tournament}
+A \emph{tournament} is an orientation of the complete graph $K_n$: between
+every pair of vertices there is exactly one directed edge. A \emph{Hamilton
+path} is a directed path that visits every vertex exactly once.
+\end{definition}
+
+\begin{question}{Extremes for Hamilton paths}{tourcount}
+What are the maximum and the minimum possible numbers of Hamilton paths in an
+$n$-vertex tournament?
+\end{question}
+
+\subsection*{The minimum}
+
+The minimum is easy to pin down. The \emph{transitive} tournament, whose
+edges respect a fixed linear order $v_1\to v_2\to\cdots\to v_n$, has exactly
+one Hamilton path. No tournament can do worse:
+
+\begin{proposition}{Every tournament has a Hamilton path}{everyhampath}
+Every $n$-vertex tournament contains at least one Hamilton path.
+\end{proposition}
+
+\begin{proof}
+Take a directed path $P=u_1\to u_2\to\cdots\to u_\ell$ of maximum length. If
+some vertex $w$ is missing from $P$, consider the edge between $w$ and $u_1$:
+if it points $w\to u_1$ we could prepend $w$, lengthening $P$. So it points
+$u_1\to w$. Likewise the edge between $u_\ell$ and $w$ must point $w\to
+u_\ell$, else we could append $w$. Walking along $P$, the orientation of the
+edge between $w$ and $u_i$ thus switches from ``into $w$'' (at $i=1$) to ``out
+of $w$'' (at $i=\ell$), so for some consecutive pair we have
+$u_i\to w\to u_{i+1}$; inserting $w$ between $u_i$ and $u_{i+1}$ extends $P$,
+contradicting maximality. Hence $P$ already covers all vertices.
+\end{proof}
+
+\subsection*{The maximum}
+
+The maximization side is where the probabilistic method first appeared.
+Szele's theorem, established in Chapter~1 (Theorem~\ref{thm:szele}), produces
+a tournament with at least $n!\,/\,2^{n-1}$ Hamilton paths by orienting edges
+with independent fair coins and averaging the path-indicators over all $n!$
+orderings. We do not repeat that argument here; instead we record what
+happens beyond it.
+
+\begin{insight}
+Szele's bound is a textbook example of the first moment being correct in
+shape but loose in scale. Szele conjectured the true maximum to be
+$n!\,/\,(2-o(1))^{n}$ --- exponentially larger \emph{in the base} than
+$n!/2^{n-1}$. The first moment loses here precisely because it averages the
+$n!$ path-indicators as if unrelated, when in fact orderings sharing many
+edges rise and fall together. Closing the gap is genuinely harder: Alon
+(1990) proved Szele's conjecture using the Minc--Br\'egman bound on
+permanents, an entropy-flavoured estimate we return to in the chapter on the
+entropy method. The lesson worth carrying: a first-moment existence proof is
+a \emph{floor}, and the distance from that floor to the truth is often where
+the substance lies.
+\end{insight}
+
+% =====================================================================
+\section{Large sum-free subsets}
+% =====================================================================
+
+\begin{definition}{Sum-free set}{sumfree}
+A subset $A$ of an abelian group is \emph{sum-free} if there are no
+$a,b,c\in A$ (not necessarily distinct) with $a+b=c$.
+\end{definition}
+
+\begin{theorem}{Erd\H{o}s, 1965}{erdossumfree}
+Every set of $n$ nonzero integers contains a sum-free subset of size at least
+$n/3$.
+\end{theorem}
+
+\begin{proof}
+Work on the circle $\mathbb{R}/\mathbb{Z}$, identified with $[0,1)$. The open
+arc $(\tfrac13,\tfrac23)$ is itself sum-free there: if two of its points sum,
+the result lands in $(\tfrac23,\tfrac43)\bmod 1$, which is disjoint from
+$(\tfrac13,\tfrac23)$.
+
+Let $A\subseteq\mathbb{Z}\setminus\{0\}$ with $|A|=n$. Pick $\theta\in[0,1]$
+uniformly at random and set
+\[
+  A_\theta = \bigl\{\,a\in A : \{a\theta\}\in(\tfrac13,\tfrac23)\,\bigr\},
+\]
+where $\{\cdot\}$ is the fractional part. Since the dilation map preserves the
+sum-free property, $A_\theta$ is sum-free for every $\theta$. For a fixed
+nonzero integer $a$, the value $\{a\theta\}$ is uniform on $[0,1]$, so
+$\Prob(a\in A_\theta)=\tfrac13$. By linearity, $\E\,|A_\theta|=n/3$, and the
+averaging principle yields a $\theta$ with $|A_\theta|\ge n/3$.
+\end{proof}
+
+\begin{remark}{Sharper bounds}{sumfreesharper}
+The constant can be nudged upward. Alon and Kleitman (1990) observed that
+$A_\theta$ is empty for $\theta$ near $0$, so $|A_\theta|<n/3$ occurs with
+positive probability; since $|A_\theta|$ is an integer, the bound improves to
+$\ge(n+1)/3$. Bourgain (1997) reached $\ge(n+2)/3$ via a difficult Fourier
+argument --- still the best known. Whether $\ge(n+f(n))/3$ holds with
+$f(n)\to\infty$ is open. Conversely, Eberhard, Green, and Manners (2014)
+constructed $n$-element sets whose largest sum-free subset has size at most
+$(\tfrac13+o(1))n$, so the leading constant $1/3$ is correct.
+\end{remark}
+
+\begin{insight}
+The number $1/3$ is not incidental: it is the measure of the largest sum-free
+arc on the circle. So no choice of arc can beat $n/3$, which explains why the
+celebrated lower-order improvements cannot come from tuning the construction
+--- they must extract information about how the dilates $\{a\theta\}$
+\emph{correlate} across different $a$, information the first moment throws
+away by design.
+\end{insight}
+
+% =====================================================================
+\section{Independent sets and Tur\'an's theorem}
+% =====================================================================
+
+We turn to extremal graph theory. The Tur\'an problem asks for the maximum
+number of edges in an $n$-vertex $K_{r+1}$-free graph. By complementation this
+is equivalent to forcing large \emph{independent} sets, and the following
+degree-sensitive bound --- found independently by Caro (1979) and Wei (1981)
+--- is the key.
+
+\begin{theorem}{Caro 1979, Wei 1981}{carowei}
+Every graph $G$ contains an independent set of size at least
+$\displaystyle\sum_{v\in V(G)}\frac{1}{d_v+1}$, where $d_v=\deg v$.
+\end{theorem}
+
+\begin{proof}
+Order the vertices uniformly at random and let $I$ be the set of vertices that
+precede all of their neighbours in this order. Then $I$ is independent: if
+adjacent $u,v$ both lay in $I$, each would have to precede the other. For a
+fixed $v$, the event $v\in I$ is exactly that $v$ comes first among the
+$d_v+1$ vertices of $\{v\}\cup N(v)$, which by symmetry has probability
+$1/(d_v+1)$. Linearity gives $\E\,|I|=\sum_v 1/(d_v+1)$, and some ordering
+attains at least this value.
+\end{proof}
+
+\begin{remark}{From randomness to a greedy algorithm}{caroweiderand}
+This proof can be made constructive in the spirit of the method of
+conditional expectations from Chapter~1, here taking a particularly clean
+form. Repeatedly select a vertex of \emph{minimum} current degree, add it to
+the independent set, and delete it together with its neighbours. Charging each
+vertex $v$ the weight $1/(d_v+1)$, every step removes total weight at most
+$1$ (the chosen vertex has the smallest degree in its neighbourhood, so that
+neighbourhood carries weight $\le 1$). Since the total weight is
+$\sum_v 1/(d_v+1)$, the greedy algorithm runs for at least that many steps and
+matches the bound exactly. Equality holds when $G$ is a disjoint union of
+cliques.
+\end{remark}
+
+Complementing $G$ exchanges independent sets for cliques and replaces $d_v$ by
+$n-1-d_v$, giving:
+
+\begin{corollary}{}{carowei-clique}
+Every $n$-vertex graph $G$ contains a clique of size at least
+$\displaystyle\sum_{v\in V(G)}\frac{1}{n-d_v}$, with equality when $G$ is
+complete multipartite.
+\end{corollary}
+
+To name the extremal graph, recall the Tur\'an graph.
+
+\begin{definition}{Tur\'an graph}{turangraph}
+The \emph{Tur\'an graph} $T_{n,r}$ is the complete $r$-partite graph on $n$
+vertices whose parts are as equal as possible (sizes differing by at most
+$1$). It is $K_{r+1}$-free, since any clique meets each part at most once.
+\end{definition}
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}[scale=0.9,
+    vtx/.style={circle, draw=black!70, thick, minimum size=5pt, inner sep=0pt},
+    edgestyle/.style={gray!55, line width=0.3pt}]
+  \foreach \y [count=\i] in {2.2, 1.1, 0.0} {\node[vtx, fill=primary!75] (A\i) at (0,\y) {};}
+  \foreach \y [count=\j] in {2.2, 1.1, 0.0} {\node[vtx, fill=secondary!75] (B\j) at (5.6,\y) {};}
+  \foreach \x [count=\k] in {0.5, 2.0, 3.6, 5.1} {\node[vtx, fill=black!65] (C\k) at (\x,-2.4) {};}
+  \foreach \i in {1,2,3}{\foreach \j in {1,2,3}{\draw[edgestyle] (A\i)--(B\j);}}
+  \foreach \i in {1,2,3}{\foreach \k in {1,2,3,4}{\draw[edgestyle] (A\i)--(C\k);}}
+  \foreach \j in {1,2,3}{\foreach \k in {1,2,3,4}{\draw[edgestyle] (B\j)--(C\k);}}
+  \foreach \i in {1,2,3}{\node[vtx, fill=primary!75] at (A\i) {};}
+  \foreach \j in {1,2,3}{\node[vtx, fill=secondary!75] at (B\j) {};}
+  \foreach \k in {1,2,3,4}{\node[vtx, fill=black!65] at (C\k) {};}
+  \node[primary, font=\small\bfseries] at (-0.85,1.1) {$V_1$};
+  \node[secondary, font=\small\bfseries] at (6.45,1.1) {$V_2$};
+  \node[black!70, font=\small\bfseries] at (2.8,-3.1) {$V_3$};
+\end{tikzpicture}
+\caption{The Tur\'an graph $T_{10,3}=K_{3,3,4}$: all edges between distinct
+parts, none within a part.}
+\label{fig:turangraph}
+\end{figure}
+
+\begin{theorem}{Tur\'an's theorem (weak form), 1941}{turanthm}
+An $n$-vertex $K_{r+1}$-free graph has at most
+$\bigl(1-\tfrac1r\bigr)\dfrac{n^2}{2}$ edges.
+\end{theorem}
+
+\begin{proof}
+Let $m=|E(G)|$. As $G$ is $K_{r+1}$-free, its clique number is at most $r$, so
+Corollary~\ref{cor:carowei-clique} together with the AM--HM inequality (the
+convexity of $x\mapsto 1/x$ applied to the values $n-d_v$, using
+$\sum_v d_v=2m$) gives
+\[
+  r \;\ge\; \sum_{v\in V}\frac{1}{n-d_v}
+    \;\ge\; \frac{n}{\,n-\frac1n\sum_v d_v\,}
+    \;=\; \frac{n}{\,n-\frac{2m}{n}\,}.
+\]
+Rearranging $r\bigl(n-\tfrac{2m}{n}\bigr)\ge n$ yields
+$m\le\bigl(1-\tfrac1r\bigr)\tfrac{n^2}{2}$.
+\end{proof}
+
+\begin{remark}{Tightness}{turanremark}
+A refinement recovers the full theorem: for fixed $\sum_v d_v$, the sum
+$\sum_v 1/(n-d_v)$ is smallest when the degrees are as equal as possible,
+which is exactly the structure of $T_{n,r}$. The bound is asymptotically
+sharp, and its $r=2$ case is Mantel's theorem: a triangle-free graph has at
+most $n^2/4$ edges.
+\end{remark}
+
+\begin{insight}
+Caro--Wei is strictly stronger than the Tur\'an bound it implies: it is
+degree-by-degree sensitive and exact for unions of cliques, whereas Tur\'an
+sees only $n$ and $m$. The implication runs one way --- a sharp local
+estimate manufactures the coarse global one --- and the convexity step is
+where extremality enters, simultaneously producing the inequality and singling
+out $T_{n,r}$ as the unique optimum.
+\end{insight}
+
+% =====================================================================
+\section{Bounding by sampling}
+% =====================================================================
+
+The hypergraph analogue of Tur\'an's problem is far harder. A
+\emph{tetrahedron} $K_4^{(3)}$ is the complete $3$-uniform hypergraph on $4$
+vertices --- the four triples one can form, like the faces of a solid
+tetrahedron.
+
+\begin{question}{Hypergraph Tur\'an problem for tetrahedra}{tetraturan}
+What is the maximum number of edges in an $n$-vertex $3$-uniform hypergraph
+with no tetrahedron?
+\end{question}
+
+This is a famous open problem. Tur\'an conjectured the extremal density to be
+$\tfrac59$, achievable by partitioning the vertices into three nearly equal
+parts $V_1,V_2,V_3$ and taking all transversal triples together with all
+``$2{+}1$'' triples (two vertices in $V_i$, one in $V_{i+1}$, indices mod
+$3$); notably, several non-isomorphic constructions reach the same density.
+Rather than chase the exact answer, we illustrate a versatile averaging idea.
+
+\begin{proposition}{Cheap sampling bound}{sample4}
+A tetrahedron-free $3$-graph on $n\ge4$ vertices has at most
+$\tfrac34\binom n3$ edges.
+\end{proposition}
+
+\begin{proof}
+Choose a uniformly random $4$-set $S$ of vertices. If the hypergraph has
+$p\binom n3$ edges, then each triple is contained in $S$ with the same
+probability, and linearity gives an expected $4p$ edges induced by $S$.
+Tetrahedron-freeness means $S$ spans at most $3$ of its $4$ triples, so
+$4p\le 3$, whence the edge count $p\binom n3\le\tfrac34\binom n3$.
+\end{proof}
+
+A larger sampling window does better, provided we solve the corresponding
+small case.
+
+\begin{lemma}{Five-vertex bound}{fivevertex}
+A tetrahedron-free $3$-graph on $5$ vertices has at most $7$ edges.
+\end{lemma}
+
+\begin{proof}
+Replace each triple by its complement to obtain an ordinary graph $G$ on the
+same $5$ vertices (a triple is present in $G$'s ``co-structure'' exactly when
+it is absent from the hypergraph). A tetrahedron --- four vertices spanning
+all four of their triples --- corresponds to a vertex of degree $4$ in $G$.
+So the hypergraph is tetrahedron-free iff $G$ has maximum degree at most $3$,
+and a $5$-vertex graph with $\Delta\le 3$ has at most
+$\lfloor 3\cdot5/2\rfloor=7$ edges, a value that is attainable.
+\end{proof}
+
+Re-running the sampling proof with $5$-vertex subsets and feeding in the bound
+$7$ sharpens the estimate.
+
+\begin{proposition}{Improved sampling bound}{sample5}
+A tetrahedron-free $3$-graph on $n\ge4$ vertices has at most
+$\tfrac{7}{10}\binom n3$ edges.
+\end{proposition}
+
+\begin{insight}
+A sampling bound looks probabilistic but is really a double count: average
+local density equals global density. The decisive structural fact is
+\emph{monotone improvement} --- enlarging the window to $s$ vertices and
+solving the $s$-vertex extremal problem can only tighten the bound, and in
+principle converges to the true Tur\'an density. This is the conceptual seed
+of Razborov's \emph{flag algebras}, which mechanize ``optimize over all local
+densities'' as a semidefinite program and currently give the record upper
+bound $\approx 0.561$. That the brute force is hopeless by hand --- the
+$s$-vertex problem explodes --- is exactly the gap flag algebras fill.
+\end{insight}
+
+% =====================================================================
+\section{Unbalancing lights}
+% =====================================================================
+
+Consider an $n\times n$ array of $\pm1$ values $a_{ij}$, where we are allowed
+to flip the sign of any full row or column. Writing $x_i,y_j\in\{-1,1\}$ for
+the flips, the quantity $\sum_{ij}a_{ij}x_iy_j$ equals the number of
+$+1$ entries minus the number of $-1$ entries after flipping. Random flips
+achieve nothing on average; the gain comes from mixing randomness with greed.
+
+\begin{theorem}{}{lights}
+For any $a_{ij}\in\{-1,1\}$ there exist $x_i,y_j\in\{-1,1\}$ with
+\[
+  \sum_{i,j=1}^n a_{ij}\,x_i\,y_j
+  \;\ge\; \Bigl(\sqrt{\tfrac{2}{\pi}}+o(1)\Bigr)\,n^{3/2}.
+\]
+\end{theorem}
+
+\begin{proof}
+Choose the column signs $y_1,\dots,y_n\in\{-1,1\}$ independently and
+uniformly. For each row $i$ set $R_i=\sum_j a_{ij}y_j$, and then choose
+$x_i=\operatorname{sign}(R_i)$ (breaking ties arbitrarily). This greedy choice
+maximizes each row's contribution, so
+\[
+  \sum_{i=1}^n R_i x_i = \sum_{i=1}^n |R_i|.
+\]
+For each fixed $i$, $R_i$ is distributed like a signed sum
+$S_n=\varepsilon_1+\cdots+\varepsilon_n$ of $n$ i.i.d.\ uniform $\pm1$ signs
+(the $R_i$ are not mutually independent, but linearity does not require it).
+By the central limit theorem,
+\[
+  \lim_{n\to\infty}\E\!\left[\frac{|S_n|}{\sqrt n}\right]
+   = \E|Z| = \frac{1}{\sqrt{2\pi}}\int_{\mathbb{R}}|x|\,e^{-x^2/2}\,dx
+   = \sqrt{\tfrac{2}{\pi}}, \qquad Z\sim\mathcal N(0,1),
+\]
+so $\E|R_i|=(\sqrt{2/\pi}+o(1))\sqrt n$. (One can even compute exactly,
+$\E|S_n|=n\,2^{1-n}\binom{n-1}{\lfloor (n-1)/2\rfloor}$, though it is not
+needed.) Summing over the $n$ rows, $\E\sum_i|R_i|=(\sqrt{2/\pi}+o(1))n^{3/2}$,
+and the averaging principle finishes the proof.
+\end{proof}
+
+\begin{insight}
+The technique is \emph{randomize-then-optimize}: leaving the rows
+deterministic and choosing them after seeing the random columns is what beats
+the trivial half. The constant $\sqrt{2/\pi}=\E|\mathcal N(0,1)|$ is the
+tell-tale of a Gaussian hiding in a discrete problem. Read as discrepancy,
+the $n^{3/2}$ growth is $n$ rows each fluctuating on the universal
+$\sqrt n$ scale --- the same square-root law behind Khintchine's inequality.
+\end{insight}
+
+The next result runs a probabilistic process whose parameters are never named;
+a compactness argument supplies them.
+
+\begin{theorem}{}{kuniform}
+Let $k\ge2$ and $V=V_1\cup\cdots\cup V_k$ with the $V_i$ disjoint of size $n$.
+Two-colour the edges of the complete $k$-uniform hypergraph on $V$, with every
+transversal edge (one vertex per $V_i$) coloured blue. Then there is a set
+$S\subseteq V$ in which the numbers of red and blue edges differ by more than
+$c_k n^k$, for a constant $c_k>0$.
+\end{theorem}
+
+\begin{proof}[Proof sketch]
+Write the proof for $k=3$; the general case is identical. Include each vertex
+of $V_i$ independently with probability $p_i$, to be chosen. With
+$a_{i,j,k}$ the blue-minus-red edge count across $V_i\times V_j\times V_k$,
+the expected blue-minus-red total inside $S$ is a polynomial
+\[
+  f(p_1,p_2,p_3)=\sum_{i\le j\le k}a_{i,j,k}\,p_ip_jp_k,
+\]
+whose coefficients satisfy $|a_{i,j,k}|\le n^3$ and whose
+$p_1p_2p_3$-coefficient equals $n^3$ by the transversal-blue hypothesis.
+Dividing by $n^3$, it suffices to make $|f|>cn^3$ for an absolute $c>0$; this
+is supplied by the next lemma applied to $f/n^3$.
+\end{proof}
+
+\begin{lemma}{Compactness lemma}{compactness}
+Let $P_k$ be the set of degree-$k$ polynomials in $p_1,\dots,p_k$ whose
+coefficients are bounded by $1$ in absolute value and whose
+$p_1p_2\cdots p_k$-coefficient equals $1$. Then there is a constant $c_k>0$
+such that every $g\in P_k$ satisfies $|g(p_1,\dots,p_k)|\ge c_k$ for some
+$p_1,\dots,p_k\in[0,1]$.
+\end{lemma}
+
+\begin{proof}
+Let $M(g)=\max_{[0,1]^k}|g|$; the maximum exists by compactness of the cube.
+Each $g\in P_k$ is nonzero (its top coefficient is $1$), so $M(g)>0$. The set
+$P_k$ is compact and $M$ is continuous, so $M$ attains a positive minimum
+$c_k=\min_{g\in P_k}M(g)>0$, which works for all of $P_k$.
+\end{proof}
+
+\begin{insight}
+This argument never exhibits the winning probabilities: compactness
+\emph{guarantees} the constant $c_k$ exists without computing it, because the
+space of normalized polynomials is compact and ``best value on the cube'' is a
+continuous, strictly positive function. It is the probabilistic method in
+purely existential mode --- the cost being an ineffective constant.
+\end{insight}
+
+% =====================================================================
+\section{The crossing number inequality}
+% =====================================================================
+
+\begin{definition}{Crossing number}{crossingnumber}
+For a drawing of a graph in the plane with edges as continuous curves, count
+its edge crossings. The \emph{crossing number} $\cross(G)$ is the minimum over
+all drawings. A graph is \emph{planar} when $\cross(G)=0$.
+\end{definition}
+
+The graphs $K_5$ and $K_{3,3}$ are the only obstructions to planarity:
+Kuratowski's theorem (1930) characterizes planarity by the absence of a
+subdivision of either, and Wagner's theorem (1937) by the absence of either as
+a minor. The quantitative question is whether many edges force many crossings.
+
+\begin{theorem}{Crossing number inequality (ACNS 1982, Leighton 1984)}{crossing}
+If $|E|\ge 4|V|$, then $\displaystyle \cross(G)\gtrsim\frac{|E|^3}{|V|^2}$.
+\end{theorem}
+
+\begin{proof}
+\textbf{Step 1 (zero to one).} Euler's formula $v-e+f=2$ for a connected
+planar drawing, combined with $3f\le 2e$ (each face borders $\ge3$ edges, each
+edge borders $2$ faces), gives $|E|\le 3|V|-6$, hence $|E|\le 3|V|$ for every
+planar graph. So $|E|>3|V|$ forces at least one crossing.
+
+\smallskip\noindent\textbf{Step 2 (one to many).} Deleting one edge per
+crossing in an optimal drawing planarizes $G$, leaving
+$|E|-\cross(G)\le 3|V|$ edges, i.e.\ $\cross(G)\ge|E|-3|V|$. For
+$|E|=\Theta(n^2)$ this only gives $\cross(G)\gtrsim n^2$ --- weak.
+
+\smallskip\noindent\textbf{Step 3 (bootstrapping).} Fix $p\in[0,1]$ and let
+$G'$ keep each vertex independently with probability $p$. Apply Step~2 to
+$G'$ and take expectations. A crossing survives iff all four endpoints are
+kept, so $\E\,\cross(G')\le p^4\cross(G)$; an edge survives iff both endpoints
+are kept, so $\E|E'|=p^2|E|$; and $\E|V'|=p|V|$. Thus
+\[
+  p^4\cross(G)\ge p^2|E|-3p|V|,\qquad\text{so}\qquad
+  \cross(G)\ge p^{-2}|E|-3p^{-3}|V|.
+\]
+Choosing $p=4|V|/|E|\in[0,1]$ (valid since $|E|\ge4|V|$) balances the two
+terms and gives $\cross(G)\gtrsim|E|^3/|V|^2$.
+\end{proof}
+
+\begin{corollary}{}{crossingcor}
+If $|E|\gtrsim|V|^2$, then $\cross(G)\gtrsim|V|^4$.
+\end{corollary}
+
+\begin{insight}
+Step~3 is pure amplification: a deterministic bound that is laughable on dense
+graphs becomes sharp once applied to a randomly thinned copy and rescaled,
+because crossings, edges, and vertices scale as $p^4,p^2,p^1$ and tuning $p$
+exploits the gap. Two caveats. Sampling \emph{vertices} is essential ---
+sampling edges fails, since the cheap bound is anchored to the vertex count.
+And the inequality's fame rests on an application not stated here: it yields a
+one-line proof of the Szemer\'edi--Trotter point--line incidence bound
+$I(P,L)\lesssim(|P||L|)^{2/3}+|P|+|L|$, turning an extremal-graph estimate into
+a cornerstone of combinatorial geometry.
+\end{insight}
+
+% =====================================================================
+\section*{Exercises}
+\addcontentsline{toc}{section}{Exercises}
+% =====================================================================
+
+\begin{enumerate}[itemsep=4pt]
+  \item Let $A$ be a measurable subset of the unit sphere in $\mathbb{R}^3$
+        containing no pair of orthogonal points.
+        \begin{enumerate}
+          \item Prove that $A$ occupies at most $1/3$ of the sphere's area.
+          \item $\bigstar$ Prove an upper bound strictly smaller than $1/3$.
+        \end{enumerate}
+  \item $\bigstar$ Prove that every set of $10$ points in the plane can be
+        covered by a union of disjoint unit disks.
+  \item Let $\mathbf r=(r_1,\dots,r_k)$ be nonzero integers with nonzero sum.
+        Prove there is a constant $c>0$ (depending only on $\mathbf r$) such
+        that every finite set $A$ of nonzero reals has a subset $B\subseteq A$
+        with $|B|\ge c|A|$ admitting no $b_1,\dots,b_k\in B$ with
+        $r_1b_1+\cdots+r_kb_k=0$.
+  \item Prove that every set $A$ of $n$ nonzero integers contains two disjoint
+        sum-free subsets $B_1,B_2$ with $|B_1|+|B_2|>2n/3$.
+  \item Let $G$ be an $n$-vertex graph with $pn^2$ edges, $n\ge10$ and
+        $p\ge10/n$. Prove $G$ contains a pair of vertex-disjoint, isomorphic
+        subgraphs, each with at least $c\,p^2n^2$ edges for some constant
+        $c>0$.
+  \item $\bigstar$ Prove that for every $r$ there is an integer $K$ such that
+        the following holds: if $S$ is a set of $rk$ evenly spaced points on a
+        circle, partitioned as $S=S_1\cup\cdots\cup S_r$ with $|S_i|=k$, then
+        for $k\ge K$ there exist $r$ congruent triangles, the $i$-th with all
+        vertices in $S_i$.
+  \item $\bigstar$ Prove that $[n]^d$ cannot be partitioned into fewer than
+        $2^d$ sets, each of the form $A_1\times\cdots\times A_d$ with
+        $A_i\subsetneq[n]$.
+\end{enumerate}
